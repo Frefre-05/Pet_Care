@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Main Menu.unity
+    guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Pet Selection.unity
+    guid: 2856f6ca698b2964f9ba6dc78a7e6aaf
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Tutorial.unity
+    guid: 8e97d2ab39af3ce43b55148d772b9066
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/House.unity
+    guid: 21f1f2afbc3fb9047a61258d2757c172
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Level 1.unity
+    guid: 52ec761c7de70c74b8d6f8a1e3b15ffc
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Level 2.unity
+    guid: 2dbcd5452a9350540a8b721be3cbf023
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Level 3.unity
+    guid: a0fe76384fa7cb842b426d0218fc477b
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Level 4.unity
+    guid: c94d34e8d20351e4e8fe535903069cf1
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Hospital.unity
+    guid: 3493edea8380b654095d511212355e02
+  - enabled: 1
+    path: Assets/Pixel Adventure 1/Scenes 1/Store.unity
+    guid: 02481968e502251458459afa2418d445
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  m_UseUCBPForAssetBundles: 0
