@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1b86597258c76af498bc6a03f6987f86
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/LevelSummaryMenu/PlayButton.prefab
+  uploadId: 749652

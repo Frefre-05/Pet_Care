@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3c6f1bb7c0985f248864d7c4a6c6325e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/Leaderboard/ItemCellView_1.prefab
+  uploadId: 749652

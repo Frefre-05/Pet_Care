@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d7eef9a962152664483cbeb1d75a5dae
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/Hud/HudElement.prefab
+  uploadId: 749652

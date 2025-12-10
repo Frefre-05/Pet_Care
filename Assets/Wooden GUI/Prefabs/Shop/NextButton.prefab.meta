@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 02f74119ab59be6468462c2c1ed408f8
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/Shop/NextButton.prefab
+  uploadId: 749652

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c194744deafba0e49a79e4ab1ca083e0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Demo/Scripts/InventoryMenu.cs
+  uploadId: 749652

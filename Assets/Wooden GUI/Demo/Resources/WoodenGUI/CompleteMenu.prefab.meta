@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 110f1214f3ed5a343904f0b389e1c406
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Demo/Resources/WoodenGUI/CompleteMenu.prefab
+  uploadId: 749652

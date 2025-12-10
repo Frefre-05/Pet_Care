@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5df06869f3bcf6b4889508b516354a29
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/MainMenu/SettingsButton.prefab
+  uploadId: 749652

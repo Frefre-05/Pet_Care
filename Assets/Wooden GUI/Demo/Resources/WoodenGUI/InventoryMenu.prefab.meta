@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f7b8ee2c679dc9547a90b9aa169e5ed2
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Demo/Resources/WoodenGUI/InventoryMenu.prefab
+  uploadId: 749652

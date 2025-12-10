@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ac2feac718946554f8a0ab8aae68209d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/LevelSummaryMenu/CoinAmountPrefab.prefab
+  uploadId: 749652
