@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3831ef9aa352141428e672a4b970b546
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/RewardMenu/RewardStatus.prefab
+  uploadId: 749652

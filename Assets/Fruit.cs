@@ -11,9 +11,9 @@ public class Fruit : MonoBehaviour
 
     private Collider2D col;
     private SpriteRenderer sr;
-    private bool picked;
+    private bool picked = false;
 
-    void Awake()
+    private void Awake()
     {
         col = GetComponent<Collider2D>();
         col.isTrigger = true;
@@ -22,36 +22,40 @@ public class Fruit : MonoBehaviour
         if (gm == null)
             gm = FindObjectOfType<GameManager>(); // fallback
 
-        // ✅ If already collected in a previous run, hide it immediately
-        if (gm != null && gm.IsFruitCollected(fruitId))
+        // If already collected in a previous run, hide it immediately
+        if (gm != null && gm.IsFruitCollected(fruitId)) // <-- fruitId (lowercase d)
         {
             gameObject.SetActive(false);
             return;
         }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (picked || other.CompareTag("Player") == false || gm == null)
+        if (picked || !other.CompareTag("Player") || gm == null)
             return;
 
         picked = true;
 
-        // ✅ Add apple to count
+        // 1) Add apple to count
         gm.AddApple(1);
 
-        // ✅ Mark fruit collected so it won’t respawn next time
-        gm.MarkFruitCollected(fruitId);
+        // 1.5) Play pick-up SFX
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.foodcollect);
+        }
 
-        // ✅ Optional animation
+        // 2) Mark fruit collected so it won't respawn next time
+        gm.MarkFruitCollected(fruitId); // <-- also fruitId here
+
+        // 3) Optional animation
         if (anim != null)
             anim.SetTrigger(pickupTrigger);
 
-        if (col != null)
-            col.enabled = false;
-
-        if (sr != null)
-            sr.enabled = false;
+        // 4) Make it disappear after small delay
+        if (col != null) col.enabled = false;
+        if (sr != null) sr.enabled = false;
 
         Destroy(gameObject, destroyDelay);
     }

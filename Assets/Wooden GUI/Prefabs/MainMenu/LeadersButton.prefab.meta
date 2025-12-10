@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 35581e81f3e9a76438322e7f4a7f3de2
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/MainMenu/LeadersButton.prefab
+  uploadId: 749652

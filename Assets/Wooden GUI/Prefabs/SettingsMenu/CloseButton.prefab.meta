@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1dfae1f1b5b2af740bbb5b068295c9bb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/SettingsMenu/CloseButton.prefab
+  uploadId: 749652

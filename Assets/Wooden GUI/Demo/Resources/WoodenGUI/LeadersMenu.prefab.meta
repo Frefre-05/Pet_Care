@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 6aa8d891dc3a2174bab928fe44f24c50
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Demo/Resources/WoodenGUI/LeadersMenu.prefab
+  uploadId: 749652

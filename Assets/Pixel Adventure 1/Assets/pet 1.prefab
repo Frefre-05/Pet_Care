@@ -256,8 +256,8 @@ MonoBehaviour:
   Hygiene: 100
   Happiness: 100
   Health: 100
-  tickSeconds: 4
-  hungerDecay: 3
+  tickSeconds: 6
+  hungerDecay: 2
   energyDecay: 1
   hygieneDecay: 1
   happinessDecay: 0.5

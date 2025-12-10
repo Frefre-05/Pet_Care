@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8abbb9cc697b24843b1001a12b4070ed
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/LevelSummaryMenu/RestartButton.prefab
+  uploadId: 749652

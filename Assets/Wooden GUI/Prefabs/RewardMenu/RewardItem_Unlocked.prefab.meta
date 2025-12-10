@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3b5672e342e83954fb7d35f6a851c163
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/RewardMenu/RewardItem_Unlocked.prefab
+  uploadId: 749652

@@ -2,11 +2,14 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
-    [Header("---------- Audio Source ----------")]
-    [SerializeField] AudioSource musicSource;
-    [SerializeField] AudioSource SFXSource;
+    // === Singleton ===
+    public static AudioManager Instance { get; private set; }
 
-    [Header("---------- Audio Clip ----------")]
+    [Header("----- Audio Source -----")]
+    [SerializeField] private AudioSource musicSource;
+    [SerializeField] private AudioSource SFXSource;
+
+    [Header("----- Audio Clip -----")]
     public AudioClip background;
     public AudioClip death;
     public AudioClip checkpoint;
@@ -15,9 +18,32 @@ public class AudioManager : MonoBehaviour
     public AudioClip endpoint;
     public AudioClip foodcollect;
 
+    private void Awake()
+    {
+        // simple singleton
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
     private void Start()
     {
-        musicSource.clip = background;
-        musicSource.Play();
+        if (musicSource != null && background != null)
+        {
+            musicSource.clip = background;
+            musicSource.loop = true;
+            musicSource.Play();
+        }
+    }
+
+    public void PlaySFX(AudioClip clip)
+    {
+        if (clip == null || SFXSource == null) return;
+        SFXSource.PlayOneShot(clip);
     }
 }

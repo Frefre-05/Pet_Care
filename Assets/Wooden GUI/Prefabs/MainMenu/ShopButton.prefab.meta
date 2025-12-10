@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 37bd9bf17b3b2cb4b928f50ea336a280
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 126490
+  packageName: Wooden GUI
+  packageVersion: 2.0
+  assetPath: Assets/Wooden GUI/Prefabs/MainMenu/ShopButton.prefab
+  uploadId: 749652
