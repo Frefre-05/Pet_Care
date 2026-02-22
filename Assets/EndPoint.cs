@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using System.Collections;
 
 public class EndPoint : MonoBehaviour
@@ -12,25 +11,15 @@ public class EndPoint : MonoBehaviour
     [Header("Where to go next")]
     [SerializeField] string sceneToLoad = "House";
 
-    [Header("Fade (optional)")]
-    [SerializeField] Image fadeImage; // full-screen black UI Image
-    [SerializeField] float fadeDuration = 0.6f;
-
     [Header("Player filter")]
     [SerializeField] string playerTag = "Player";
-
-    [Header("Apple / Energy System")]
-    [Tooltip("PlayerPrefs key for saved apples/energy count")]
-    [SerializeField] string appleKey = "Apples";
-    [Tooltip("Cost for each level (index = 0=Tutorial, 1=Level1, etc.)")]
-    [SerializeField] int[] levelAppleCosts = { 0, 3, 5, 8, 10 };
 
     bool isTransitioning = false;
 
     // === ADDED: helper to get the ACTIVE PetNeeds (the clone) ===
     private PetNeeds FindActivePetNeeds()
     {
-        var all = FindObjectsOfType<PetNeeds>();
+        var all = Object.FindObjectsByType<PetNeeds>(FindObjectsSortMode.None);
         foreach (var p in all)
         {
             if (p != null && p.isActiveAndEnabled && p.gameObject.activeInHierarchy)
@@ -53,23 +42,12 @@ public class EndPoint : MonoBehaviour
         isTransitioning = true;
 
         // 1) Unlock next level
-        LevelProgress.MarkCompleted(thisLevelIndex);
+        int finishedIndex = ResolveFinishedLevelIndex();
+        LevelProgress.MarkCompleted(finishedIndex);
 
-        // 2) Subtract apples depending on current level
-        int apples = PlayerPrefs.GetInt(appleKey, 0);
-        int cost = 0;
-
-        if (thisLevelIndex >= 0 && thisLevelIndex < levelAppleCosts.Length)
-        {
-            cost = levelAppleCosts[thisLevelIndex];
-        }
-
-        apples -= cost;
-        if (apples < 0) apples = 0; // prevent negative apples
-        PlayerPrefs.SetInt(appleKey, apples);
-        PlayerPrefs.Save();
-
-        Debug.Log($"Level {thisLevelIndex} completed! Cost: {cost} apples. Remaining apples: {apples}");
+        // 2) Do not charge apples here.
+        // Entry buttons/shop already handle spending; charging in EndPoint causes double-deduction.
+        Debug.Log($"Level {finishedIndex} completed. Apples unchanged: {AppleCurrency.Get()}");
 
         // === ADDED: make the ACTIVE pet happy when teleporting ===
         var pet = FindActivePetNeeds();
@@ -79,30 +57,29 @@ public class EndPoint : MonoBehaviour
         }
         // =========================================================
 
-        // 3) Fade to black (optional)
-        if (fadeImage != null && fadeDuration > 0f)
-        {
-            var c = fadeImage.color;
-            c.a = 0f;
-            fadeImage.color = c;
-            fadeImage.gameObject.SetActive(true);
-
-            float t = 0f;
-            while (t < fadeDuration)
-            {
-                t += Time.unscaledDeltaTime;
-                c.a = Mathf.InverseLerp(0f, fadeDuration, t);
-                fadeImage.color = c;
-                yield return null;
-            }
-        }
-
-        yield return new WaitForSecondsRealtime(0.1f);
+        // 3) Global scene transition handles fade-out/in.
+        yield return new WaitForSecondsRealtime(0.05f);
 
         // 4) Load next scene
         if (!string.IsNullOrEmpty(sceneToLoad))
         {
-            SceneManager.LoadScene(sceneToLoad);
+            // Keep trophy transition at previous slower speed.
+            SceneTransitionLoader.LoadScene(sceneToLoad, 1.7f, 1.7f);
         }
+    }
+
+    private int ResolveFinishedLevelIndex()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        string s = scene == null ? string.Empty : scene.ToLowerInvariant().Replace(" ", "");
+
+        // Robust fallback to scene-name mapping to avoid inspector misconfiguration.
+        if (s.Contains("tutorial")) return 0;
+        if (s.Contains("level1")) return 1;
+        if (s.Contains("level2")) return 2;
+        if (s.Contains("level3")) return 3;
+        if (s.Contains("level4")) return 4;
+
+        return Mathf.Clamp(thisLevelIndex, 0, 4);
     }
 }

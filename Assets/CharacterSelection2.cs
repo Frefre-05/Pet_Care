@@ -84,9 +84,9 @@ public class CharacterSelection2 : MonoBehaviour
         PlayerPrefs.Save();
 
         if (!string.IsNullOrEmpty(playSceneName))
-            SceneManager.LoadScene(playSceneName);
+            SceneTransitionLoader.LoadScene(playSceneName);
         else
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+            SceneTransitionLoader.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
     // ---------- Helpers ----------

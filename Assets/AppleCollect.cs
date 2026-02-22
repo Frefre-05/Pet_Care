@@ -45,17 +45,13 @@ public class AppleCollect : MonoBehaviour
         if (gm != null)
             gm.AddApple(1); // uses your GameManager if present
         else
-        {
-            int apples = PlayerPrefs.GetInt("APPLE_COUNT", 0);
-            PlayerPrefs.SetInt("APPLE_COUNT", apples + 1); // PlayerPrefs fallback
-            PlayerPrefs.Save();
-        }
+            AppleCurrency.Add(1);
 
         // 3) Optional player growth (keep your logic)
         var growth = other.GetComponent<PlayerGrowth>();
         if (growth != null)
         {
-            int applesNow = (gm != null) ? gm.AppleCount : PlayerPrefs.GetInt("APPLE_COUNT", 0);
+            int applesNow = AppleCurrency.Get();
             if (applesNow % 20 == 0) growth.Grow();
         }
 

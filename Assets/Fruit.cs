@@ -20,7 +20,7 @@ public class Fruit : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
 
         if (gm == null)
-            gm = FindObjectOfType<GameManager>(); // fallback
+            gm = FindFirstObjectByType<GameManager>(); // fallback
 
         // If already collected in a previous run, hide it immediately
         if (gm != null && gm.IsFruitCollected(fruitId)) // <-- fruitId (lowercase d)

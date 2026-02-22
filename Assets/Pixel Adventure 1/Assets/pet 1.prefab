@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: -8119070096291426565}
   - component: {fileID: -5872608889576687753}
   - component: {fileID: -6675467584617601724}
+  - component: {fileID: 5456997206448177828}
   m_Layer: 3
   m_Name: pet 1
   m_TagString: Player
@@ -210,6 +211,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JumpTwice
   moveSpeed: 5
   jumpForce: 10
+  enableHungerSpeedPenalty: 1
+  lowHungerThreshold: 35
+  emptyHungerThreshold: 5
+  minSpeedMultiplierAtZeroHunger: 0.6
   extraJumps: 1
 --- !u!114 &4009478613480657374
 MonoBehaviour:
@@ -257,11 +262,15 @@ MonoBehaviour:
   Happiness: 100
   Health: 100
   tickSeconds: 6
-  hungerDecay: 2
+  hungerDecay: 1.5
   energyDecay: 1
   hygieneDecay: 1
   happinessDecay: 0.5
-  healthAutoRegen: -1
+  healthAutoRegen: -0.5
+  enableSlowerOverallDecay: 1
+  overallDecayMultiplier: 0.7
+  otherNeedsSlowMultiplier: 0.9
+  minGapAboveHappiness: 0.1
   lowNeed: 20
   hungerPerApple: 5
 --- !u!114 &124885048816064745
@@ -290,6 +299,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
+  enableHungerSpeedPenalty: 1
+  lowHungerThreshold: 35
+  emptyHungerThreshold: 5
+  minSpeedMultiplierAtZeroHunger: 0.6
 --- !u!114 &-5872608889576687753
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -320,3 +333,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   defaultScale: 7
+--- !u!114 &5456997206448177828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709664568850342564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d26b52a4da0204438093f53b7d45d4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUnstuckHitbox
+  inputThreshold: 0.2
+  minMovementPerFixedStep: 0.001
+  stuckTime: 0.2
+  unstuckCooldown: 0.25
+  horizontalNudge: 0.08
+  verticalNudge: 0.08
+  pushSpeed: 2.5
+  forceZeroFriction: 1
+  setContinuousCollision: 1
+  setInterpolation: 1

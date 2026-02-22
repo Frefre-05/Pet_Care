@@ -12,11 +12,12 @@ public static class SaveData
     static bool loaded = false;
     static HashSet<string> collected = new HashSet<string>();
     static int appleCountCache = 0;
+    public static bool IsHardResetInProgress { get; private set; }
 
     static void EnsureLoaded()
     {
         if (loaded) return;
-        appleCountCache = PlayerPrefs.GetInt(APPLE_COUNT_KEY, 0);
+        appleCountCache = AppleCurrency.Get();
 
         collected.Clear();
         var csv = PlayerPrefs.GetString(FRUITS_KEY, "");
@@ -30,8 +31,18 @@ public static class SaveData
 
     public static int AppleCount
     {
-        get { EnsureLoaded(); return appleCountCache; }
-        set { EnsureLoaded(); appleCountCache = Mathf.Max(0, value); }
+        get
+        {
+            EnsureLoaded();
+            appleCountCache = AppleCurrency.Get();
+            return appleCountCache;
+        }
+        set
+        {
+            EnsureLoaded();
+            appleCountCache = Mathf.Max(0, value);
+            AppleCurrency.Set(appleCountCache);
+        }
     }
 
     public static bool IsFruitCollected(string id)
@@ -50,9 +61,9 @@ public static class SaveData
     public static void AddApples(int amount)
     {
         EnsureLoaded();
+        appleCountCache = AppleCurrency.Get();
         appleCountCache += Mathf.Max(0, amount);
-        PlayerPrefs.SetInt(APPLE_COUNT_KEY, appleCountCache);
-        PlayerPrefs.Save();
+        AppleCurrency.Set(appleCountCache);
     }
 
     static void SaveCollectedOnly()
@@ -73,5 +84,25 @@ public static class SaveData
         var v = PlayerPrefs.GetInt(ENERGY_FLAG_KEY, 0) == 1;
         if (v) { PlayerPrefs.DeleteKey(ENERGY_FLAG_KEY); PlayerPrefs.Save(); }
         return v;
+    }
+
+    // Full hard reset helper for secret debug hotkeys.
+    public static void HardResetAllProgress()
+    {
+        IsHardResetInProgress = true;
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        loaded = false;
+        collected.Clear();
+        appleCountCache = 0;
+    }
+
+    public static void CompleteHardReset()
+    {
+        loaded = false;
+        collected.Clear();
+        appleCountCache = 0;
+        IsHardResetInProgress = false;
     }
 }

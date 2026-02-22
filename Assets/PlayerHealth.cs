@@ -20,7 +20,7 @@ public class PlayerHealth : MonoBehaviour
     private void Awake()
     {
         if (hud == null)
-            hud = FindObjectOfType<HealthManager>();
+            hud = FindFirstObjectByType<HealthManager>();
         currentHearts = maxHearts;
         if (hud != null)
             hud.SetHearts(currentHearts, maxHearts);
@@ -41,7 +41,7 @@ public class PlayerHealth : MonoBehaviour
         if (currentHearts <= 0)
         {
             // Restart the scene
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            SceneTransitionLoader.LoadScene(SceneManager.GetActiveScene().buildIndex);
             return;
         }
 

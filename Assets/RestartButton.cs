@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class RestartButton : MonoBehaviour
 {
@@ -11,6 +10,6 @@ public class RestartButton : MonoBehaviour
         PlayerPrefs.Save();
 
         // Reload current active scene
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneTransitionLoader.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
 }

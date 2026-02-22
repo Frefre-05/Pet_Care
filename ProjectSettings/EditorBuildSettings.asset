@@ -32,9 +32,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Pixel Adventure 1/Scenes 1/Hospital.unity
     guid: 3493edea8380b654095d511212355e02
-  - enabled: 1
-    path: Assets/Pixel Adventure 1/Scenes 1/Store.unity
-    guid: 02481968e502251458459afa2418d445
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

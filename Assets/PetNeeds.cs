@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PetNeeds : MonoBehaviour
 {
+    private const string LastBedUseKey = "PIXIE_AI_LAST_BED_USE_UTC";
+    private const string LastShowerUseKey = "PIXIE_AI_LAST_SHOWER_USE_UTC";
+
     [Header("Starting values (0–100)")]
     [Range(0, 100)] public float Hunger = 100f;
     [Range(0, 100)] public float Energy = 100f;
@@ -19,6 +23,14 @@ public class PetNeeds : MonoBehaviour
     public float happinessDecay = 0.5f;
     public float healthAutoRegen = 0.25f;
 
+    [Header("Global Decay Tuning (Reversible)")]
+    [SerializeField] private bool enableSlowerOverallDecay = true;
+    [Range(0.1f, 1f)] [SerializeField] private float overallDecayMultiplier = 0.7f;
+
+    [Header("Need Decay Tuning")]
+    [Range(0.5f, 1f)] [SerializeField] private float otherNeedsSlowMultiplier = 0.9f;
+    [SerializeField] private float minGapAboveHappiness = 0.1f;
+
     [Header("Low needs")]
     public float lowNeed = 20f;
 
@@ -32,6 +44,25 @@ public class PetNeeds : MonoBehaviour
 
     private Coroutine decayRoutine;
     private PetColorChanger pcc;
+    private static bool sessionNeedsInitialized;
+    private static bool firstSpawnHealthNormalized;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeStatics()
+    {
+        // Ensures a true fresh start each time the game boots/play mode starts,
+        // even when domain reload is disabled in editor settings.
+        sessionNeedsInitialized = false;
+        firstSpawnHealthNormalized = false;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void ResetRuntimeStaticsBeforeScene()
+    {
+        // Extra safety for projects/editor setups where SubsystemRegistration can be skipped.
+        sessionNeedsInitialized = false;
+        firstSpawnHealthNormalized = false;
+    }
 
     // === NEW: save keys for PlayerPrefs ===
     private const string HUNGER_KEY = "PET_HUNGER";
@@ -49,7 +80,29 @@ public class PetNeeds : MonoBehaviour
 
     private void Awake()
     {
-        LoadNeeds(); // NEW – load saved values (if any)
+        if (!sessionNeedsInitialized)
+        {
+            // Start each fresh run with full bars.
+            Hunger = 100f;
+            Energy = 100f;
+            Hygiene = 100f;
+            Happiness = 100f;
+            Health = 100f;
+            SaveNeeds();
+            sessionNeedsInitialized = true;
+        }
+        else
+        {
+            LoadNeeds(); // keep continuity during the same run across scene switches
+        }
+
+        // Single fix: guarantee first runtime spawn starts with full health.
+        if (!firstSpawnHealthNormalized)
+        {
+            Health = 100f;
+            SaveNeeds();
+            firstSpawnHealthNormalized = true;
+        }
         ClampAll();
     }
 
@@ -67,7 +120,8 @@ public class PetNeeds : MonoBehaviour
             decayRoutine = null;
         }
 
-        SaveNeeds(); // NEW – save current values when changing scene / disabling
+        if (!SaveData.IsHardResetInProgress)
+            SaveNeeds(); // save current values when changing scene / disabling
     }
 
     // ============== MAIN LOOP ==============
@@ -85,10 +139,19 @@ public class PetNeeds : MonoBehaviour
 
     private void TickNeeds()
     {
-        Hunger = Mathf.Clamp(Hunger - hungerDecay, 0f, 100f);
-        Energy = Mathf.Clamp(Energy - energyDecay, 0f, 100f);
-        Hygiene = Mathf.Clamp(Hygiene - hygieneDecay, 0f, 100f);
-        Happiness = Mathf.Clamp(Happiness - happinessDecay, 0f, 100f);
+        float decayScale = enableSlowerOverallDecay ? Mathf.Clamp(overallDecayMultiplier, 0.1f, 1f) : 1f;
+
+        float happyDecay = Mathf.Max(0.02f, happinessDecay);
+        float minOtherDecay = happyDecay + Mathf.Max(0.01f, minGapAboveHappiness);
+
+        float hungerStep = Mathf.Max(minOtherDecay, hungerDecay * Mathf.Clamp(otherNeedsSlowMultiplier, 0.5f, 1f));
+        float energyStep = Mathf.Max(minOtherDecay, energyDecay * Mathf.Clamp(otherNeedsSlowMultiplier, 0.5f, 1f));
+        float hygieneStep = Mathf.Max(minOtherDecay, hygieneDecay * Mathf.Clamp(otherNeedsSlowMultiplier, 0.5f, 1f));
+
+        Hunger = Mathf.Clamp(Hunger - (hungerStep * decayScale), 0f, 100f);
+        Energy = Mathf.Clamp(Energy - (energyStep * decayScale), 0f, 100f);
+        Hygiene = Mathf.Clamp(Hygiene - (hygieneStep * decayScale), 0f, 100f);
+        Happiness = Mathf.Clamp(Happiness - (happinessDecay * decayScale), 0f, 100f);
 
         // Health logic: regen if everything is OK, lose health if any need is low
         bool anyLow = Hunger <= lowNeed ||
@@ -97,7 +160,11 @@ public class PetNeeds : MonoBehaviour
         Happiness <= lowNeed;
 
         if (anyLow)
-            Health = Mathf.Clamp(Health - 1f, 0f, 100f);
+        {
+            // Health drop speed exactly matches Happiness drop speed.
+            float healthLoss = Mathf.Max(0.01f, happinessDecay * decayScale);
+            Health = Mathf.Clamp(Health - healthLoss, 0f, 100f);
+        }
         else
             Health = Mathf.Clamp(Health + healthAutoRegen, 0f, 100f);
 
@@ -105,11 +172,12 @@ public class PetNeeds : MonoBehaviour
 
         OnNeedsChanged?.Invoke();
         OnHealthChanged?.Invoke(Health);
+
     }
 
     private void Update()
     {
-        pcc.UpdateColors(Hunger, Energy, Hygiene, Happiness, Health);
+        if (pcc != null) pcc.UpdateColors(Hunger, Energy, Hygiene, Happiness, Health);
     }
 
     private void ClampAll()
@@ -160,12 +228,19 @@ public class PetNeeds : MonoBehaviour
         OnHealthChanged?.Invoke(Health);
     }
 
+    public void ApplyLevelCompletionHealthPenalty()
+    {
+        // Intentionally disabled: no level-end health penalty.
+    }
+
     // ============== ACTIONS FOR BUTTONS / SHOP / BED ==============
 
     /// <summary> Bathroom / bath button – fully restores Hygiene. </summary>
     public void Bath()
     {
         Hygiene = 100f;
+        PlayerPrefs.SetInt(LastShowerUseKey, NowUnix());
+        PlayerPrefs.Save();
         OnNeedsChanged?.Invoke();
     }
 
@@ -191,6 +266,8 @@ public class PetNeeds : MonoBehaviour
     public void SleepFill()
     {
         Energy = 100f;
+        PlayerPrefs.SetInt(LastBedUseKey, NowUnix());
+        PlayerPrefs.Save();
 
         OnNeedsChanged?.Invoke();
         OnHealthChanged?.Invoke(Health);
@@ -204,6 +281,8 @@ public class PetNeeds : MonoBehaviour
     {
         // Add to energy instead of always full, in case you use a smaller amount
         Energy = Mathf.Clamp(Energy + amount, 0f, 100f);
+        PlayerPrefs.SetInt(LastBedUseKey, NowUnix());
+        PlayerPrefs.Save();
 
         OnNeedsChanged?.Invoke();
     }
@@ -222,11 +301,24 @@ public class PetNeeds : MonoBehaviour
 
     private void LoadNeeds()
     {
-        // Use current inspector values as defaults if nothing saved yet
-        Hunger = PlayerPrefs.GetFloat(HUNGER_KEY, Hunger);
-        Energy = PlayerPrefs.GetFloat(ENERGY_KEY, Energy);
-        Hygiene = PlayerPrefs.GetFloat(HYGIENE_KEY, Hygiene);
-        Happiness = PlayerPrefs.GetFloat(HAPPINESS_KEY, Happiness);
-        Health = PlayerPrefs.GetFloat(HEALTH_KEY, Health);
+        // Always default missing keys to full values.
+        Hunger = PlayerPrefs.GetFloat(HUNGER_KEY, 100f);
+        Energy = PlayerPrefs.GetFloat(ENERGY_KEY, 100f);
+        Hygiene = PlayerPrefs.GetFloat(HYGIENE_KEY, 100f);
+        Happiness = PlayerPrefs.GetFloat(HAPPINESS_KEY, 100f);
+        Health = PlayerPrefs.GetFloat(HEALTH_KEY, 100f);
+    }
+
+    private int NowUnix()
+    {
+        long unix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (unix > int.MaxValue) return int.MaxValue;
+        if (unix < int.MinValue) return int.MinValue;
+        return (int)unix;
+    }
+
+    public static void ResetSessionInitialization()
+    {
+        sessionNeedsInitialized = false;
     }
 }

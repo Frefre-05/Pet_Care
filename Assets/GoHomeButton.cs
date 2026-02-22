@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GoHomeButton : MonoBehaviour
 {
@@ -8,6 +7,6 @@ public class GoHomeButton : MonoBehaviour
 
     public void GoHome()
     {
-        SceneManager.LoadScene(homeSceneName);
+        SceneTransitionLoader.LoadScene(homeSceneName);
     }
 }

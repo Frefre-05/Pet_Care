@@ -8,25 +8,58 @@ public class LevelProgress : MonoBehaviour
     public static event Action OnProgressChanged;
 
     const string KEY = "MAX_UNLOCKED";
+    static bool initialized;
+    static LevelProgress instance;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetRuntimeStatics()
+    {
+        initialized = false;
+        instance = null;
+        MaxUnlocked = 0;
+    }
 
     void Awake()
     {
-        // Singleton-ish & persistent
-        if (FindObjectOfType<LevelProgress>() != this)
+        // Singleton + persistent
+        if (instance != null && instance != this)
         {
-            if (FindObjectOfType<LevelProgress>() != null && FindObjectOfType<LevelProgress>() != this)
-            { Destroy(gameObject); return; }
+            Destroy(gameObject);
+            return;
         }
+        instance = this;
         DontDestroyOnLoad(gameObject);
 
-        MaxUnlocked = PlayerPrefs.GetInt(KEY, 0); // default: only Tutorial
+        MaxUnlocked = Mathf.Clamp(PlayerPrefs.GetInt(KEY, 0), 0, 4); // default: only Tutorial
+        initialized = true;
     }
 
-    public static bool CanPlay(int requiredIndex) => MaxUnlocked >= requiredIndex;
+    static void EnsureInitialized()
+    {
+        if (initialized) return;
+        MaxUnlocked = Mathf.Clamp(PlayerPrefs.GetInt(KEY, 0), 0, 4);
+        initialized = true;
+    }
+
+    public static bool CanPlay(int requiredIndex)
+    {
+        EnsureInitialized();
+        return MaxUnlocked >= requiredIndex;
+    }
 
     // Call when a level is completed. Pass its index (see mapping below).
     public static void MarkCompleted(int justFinishedIndex)
     {
+        EnsureInitialized();
+
+        // Only allow sequential progression: you can only complete a level that is currently unlocked.
+        // This prevents accidental "unlock all" if an endpoint is misconfigured with a wrong index.
+        if (justFinishedIndex > MaxUnlocked)
+        {
+            Debug.LogWarning($"[LevelProgress] Ignored out-of-order completion index {justFinishedIndex}. Current MaxUnlocked is {MaxUnlocked}.");
+            return;
+        }
+
         // Unlock next one
         int next = Mathf.Clamp(justFinishedIndex + 1, 0, 4);
         if (next > MaxUnlocked)
@@ -41,6 +74,7 @@ public class LevelProgress : MonoBehaviour
     // For debugging, you can add a reset method if you want.
     public static void ResetAll()
     {
+        EnsureInitialized();
         MaxUnlocked = 0;
         PlayerPrefs.SetInt(KEY, 0);
         PlayerPrefs.Save();

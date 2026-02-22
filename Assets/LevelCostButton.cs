@@ -14,8 +14,8 @@ public class LevelCostButton : MonoBehaviour
     [SerializeField] private int sceneIndex = -1; // or use Build Settings index
 
     [Header("Currency")]
-    [SerializeField] private string applesKey = "Apples"; // PlayerPrefs key
     [SerializeField] private int cost = 0; // Set per button in Inspector
+    [SerializeField] private bool deductCostOnLoad = false;
 
     [Header("Optional visuals")]
     [SerializeField] private GameObject lockIcon; // small padlock image (optional)
@@ -23,7 +23,15 @@ public class LevelCostButton : MonoBehaviour
     [SerializeField] private TMP_Text warningText; // optional TMP text to show "Need X apples"
     [SerializeField] private float warningDuration = 1.5f;
 
+    [Header("Energy Gate (Reversible)")]
+    [SerializeField] private bool requireMinEnergyToPlay = true;
+    [Range(0f, 100f)] [SerializeField] private float minEnergyPercent = 50f;
+    [Header("Progress Gate")]
+    [SerializeField] private bool requireLevelProgressUnlock = true;
+
     private Button btn;
+    private bool isLoading;
+    private float nextRefreshAt;
 
     void OnEnable()
     {
@@ -33,20 +41,32 @@ public class LevelCostButton : MonoBehaviour
         RefreshInteractable();
     }
 
+    void Update()
+    {
+        if (Time.unscaledTime < nextRefreshAt) return;
+        nextRefreshAt = Time.unscaledTime + 0.5f;
+        RefreshInteractable();
+    }
+
     /// <summary>Call this if your apple count changes while the menu is open.</summary>
     public void RefreshInteractable()
     {
-        int apples = PlayerPrefs.GetInt(applesKey, 0);
+        int apples = AppleCurrency.Get();
         bool canAfford = apples >= cost;
+        bool energyOk = IsEnergyGatePassed();
+        bool progressOk = IsProgressGatePassed();
+        bool canUse = canAfford && energyOk && progressOk;
 
-        if (btn) btn.interactable = canAfford;
-        if (lockIcon) lockIcon.SetActive(!canAfford);
-        if (greyOut) greyOut.alpha = canAfford ? 1f : 0.5f;
+        if (btn) btn.interactable = canUse;
+        if (lockIcon) lockIcon.SetActive(!canUse);
+        if (greyOut) greyOut.alpha = canUse ? 1f : 0.5f;
     }
 
     private void HandleClick()
     {
-        int apples = PlayerPrefs.GetInt(applesKey, 0);
+        if (isLoading) return;
+
+        int apples = AppleCurrency.Get();
         if (apples < cost)
         {
             ShowWarning();
@@ -54,16 +74,30 @@ public class LevelCostButton : MonoBehaviour
             return;
         }
 
-        // Deduct cost and save
-        apples -= cost;
-        PlayerPrefs.SetInt(applesKey, apples);
-        PlayerPrefs.Save();
+        if (!IsEnergyGatePassed())
+        {
+            ShowEnergyWarning();
+            RefreshInteractable();
+            return;
+        }
+
+        if (!IsProgressGatePassed())
+        {
+            ShowProgressWarning();
+            RefreshInteractable();
+            return;
+        }
+
+        // Optional deduction. Disabled by default to keep apple count consistent across scenes.
+        if (deductCostOnLoad)
+            AppleCurrency.Set(apples - cost);
+        isLoading = true;
 
         // Load the scene
         if (reference == RefType.ByName && !string.IsNullOrEmpty(sceneName))
-            SceneManager.LoadScene(sceneName);
+            SceneTransitionLoader.LoadScene(sceneName);
         else if (reference == RefType.ByIndex && sceneIndex >= 0)
-            SceneManager.LoadScene(sceneIndex);
+            SceneTransitionLoader.LoadScene(sceneIndex);
         else
             Debug.LogWarning($"{name}: No valid scene target set on LevelCostButton.");
     }
@@ -85,5 +119,73 @@ public class LevelCostButton : MonoBehaviour
     private void ClearWarning()
     {
         if (warningText) warningText.text = "";
+    }
+
+    private bool IsEnergyGatePassed()
+    {
+        if (!requireMinEnergyToPlay) return true;
+        PetNeeds petNeeds = FindAnyObjectByType<PetNeeds>();
+        if (petNeeds == null) return true;
+        return petNeeds.Energy >= minEnergyPercent;
+    }
+
+    private bool IsProgressGatePassed()
+    {
+        if (!requireLevelProgressUnlock) return true;
+        int required = ResolveRequiredUnlockedIndex();
+        if (required < 0) return true; // non-level scenes
+        return LevelProgress.CanPlay(required);
+    }
+
+    private int ResolveRequiredUnlockedIndex()
+    {
+        string targetName = null;
+
+        if (reference == RefType.ByName && !string.IsNullOrWhiteSpace(sceneName))
+        {
+            targetName = sceneName;
+        }
+        else if (reference == RefType.ByIndex && sceneIndex >= 0)
+        {
+            string path = SceneUtility.GetScenePathByBuildIndex(sceneIndex);
+            if (!string.IsNullOrWhiteSpace(path))
+                targetName = System.IO.Path.GetFileNameWithoutExtension(path);
+        }
+
+        string s = (targetName ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "");
+        if (s.Contains("tutorial")) return 0;
+        if (s.Contains("level1")) return 1;
+        if (s.Contains("level2")) return 2;
+        if (s.Contains("level3")) return 3;
+        if (s.Contains("level4")) return 4;
+        return -1;
+    }
+
+    private void ShowEnergyWarning()
+    {
+        if (warningText)
+        {
+            warningText.text = $"Need {Mathf.RoundToInt(minEnergyPercent)}% energy";
+            CancelInvoke(nameof(ClearWarning));
+            Invoke(nameof(ClearWarning), warningDuration);
+        }
+        else
+        {
+            Debug.LogWarning($"Not enough energy. Requires at least {minEnergyPercent}%.");
+        }
+    }
+
+    private void ShowProgressWarning()
+    {
+        if (warningText)
+        {
+            warningText.text = "Locked: finish previous level first";
+            CancelInvoke(nameof(ClearWarning));
+            Invoke(nameof(ClearWarning), warningDuration);
+        }
+        else
+        {
+            Debug.LogWarning("Level locked: finish the previous level first.");
+        }
     }
 }

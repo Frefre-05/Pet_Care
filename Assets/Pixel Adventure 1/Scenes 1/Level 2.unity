@@ -1724,11 +1724,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   thisLevelIndex: 4
   sceneToLoad: House
-  fadeImage: {fileID: 8013179614986506358, guid: f3539d7ab1afcb249a7e410389c5f4a0, type: 3}
-  fadeDuration: 2
   playerTag: Player
-  appleKey: Apples
-  levelAppleCosts: 000000000300000005000000080000000a000000
 --- !u!95 &1211408710
 Animator:
   serializedVersion: 7
@@ -2440,63 +2436,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1397428414
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 617747636426167154, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_Name
-      value: Apple_0 (16)
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 26.87
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7949665906395339601, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: d72728b2206343c4fab19d44ef8c1e39, type: 3}
 --- !u!1 &1431186481
 GameObject:
   m_ObjectHideFlags: 0
@@ -2759,6 +2698,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   musicSource: {fileID: 878902793}
   SFXSource: {fileID: 630898466}
+  musicFadeDurationMin: 1.5
+  musicFadeDurationMax: 1.9
   background: {fileID: 8300000, guid: fc5af015011ea3745b7f78ea1dd1049f, type: 3}
   death: {fileID: 8300000, guid: 5fdb13d3756c84fecac96f5a2d124370, type: 3}
   checkpoint: {fileID: 8300000, guid: 7478151cf36724a7dada558f746c3633, type: 3}
@@ -10814,7 +10755,6 @@ SceneRoots:
   - {fileID: 108650827}
   - {fileID: 1500894301}
   - {fileID: 1227340324}
-  - {fileID: 1397428414}
   - {fileID: 923647714}
   - {fileID: 1982015111}
   - {fileID: 1607533866}
