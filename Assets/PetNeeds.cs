@@ -34,9 +34,13 @@ public class PetNeeds : MonoBehaviour
     [Header("Low needs")]
     public float lowNeed = 20f;
 
-    [Header("Apples / Currency")]
+    [Header("Gold Coins / Currency")]
     [Tooltip("How much hunger is restored per apple when feeding")]
     public float hungerPerApple = 5f;
+
+    [Header("Sickness")]
+    [SerializeField] private float sicknessHealthDrainPerTick = 0.75f;
+    public bool IsSick { get; private set; }
 
     // Events – UI / color / other scripts can listen to this
     public event Action OnNeedsChanged;
@@ -46,6 +50,7 @@ public class PetNeeds : MonoBehaviour
     private PetColorChanger pcc;
     private static bool sessionNeedsInitialized;
     private static bool firstSpawnHealthNormalized;
+    private bool healthRecoveryArmed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeStatics()
@@ -70,6 +75,10 @@ public class PetNeeds : MonoBehaviour
     private const string HYGIENE_KEY = "PET_HYGIENE";
     private const string HAPPINESS_KEY = "PET_HAPPINESS";
     private const string HEALTH_KEY = "PET_HEALTH";
+    private const string SICK_KEY = "PET_IS_SICK";
+    private const string CHERRY_DECAY_BOOST_UNTIL_KEY = "PET_CHERRY_DECAY_BOOST_UNTIL_UTC";
+    private const string TEDDY_HEALTH_DECAY_BOOST_UNTIL_KEY = "PET_TEDDY_HEALTH_DECAY_BOOST_UNTIL_UTC";
+    private const string VOLLEYBALL_HAPPINESS_DECAY_BOOST_UNTIL_KEY = "PET_VOLLEYBALL_HAPPINESS_DECAY_BOOST_UNTIL_UTC";
 
     // ============== LIFECYCLE ==============
 
@@ -140,6 +149,8 @@ public class PetNeeds : MonoBehaviour
     private void TickNeeds()
     {
         float decayScale = enableSlowerOverallDecay ? Mathf.Clamp(overallDecayMultiplier, 0.1f, 1f) : 1f;
+        if (IsCherryDecayBoostActive())
+            decayScale *= 0.9f;
 
         float happyDecay = Mathf.Max(0.02f, happinessDecay);
         float minOtherDecay = happyDecay + Mathf.Max(0.01f, minGapAboveHappiness);
@@ -148,10 +159,12 @@ public class PetNeeds : MonoBehaviour
         float energyStep = Mathf.Max(minOtherDecay, energyDecay * Mathf.Clamp(otherNeedsSlowMultiplier, 0.5f, 1f));
         float hygieneStep = Mathf.Max(minOtherDecay, hygieneDecay * Mathf.Clamp(otherNeedsSlowMultiplier, 0.5f, 1f));
 
+        float happinessDecayScale = IsVolleyballHappinessDecayBoostActive() ? decayScale * 0.9f : decayScale;
+
         Hunger = Mathf.Clamp(Hunger - (hungerStep * decayScale), 0f, 100f);
         Energy = Mathf.Clamp(Energy - (energyStep * decayScale), 0f, 100f);
         Hygiene = Mathf.Clamp(Hygiene - (hygieneStep * decayScale), 0f, 100f);
-        Happiness = Mathf.Clamp(Happiness - (happinessDecay * decayScale), 0f, 100f);
+        Happiness = Mathf.Clamp(Happiness - (happinessDecay * happinessDecayScale), 0f, 100f);
 
         // Health logic: regen if everything is OK, lose health if any need is low
         bool anyLow = Hunger <= lowNeed ||
@@ -162,13 +175,20 @@ public class PetNeeds : MonoBehaviour
         if (anyLow)
         {
             // Health drop speed exactly matches Happiness drop speed.
-            float healthLoss = Mathf.Max(0.01f, happinessDecay * decayScale);
+            float healthLoss = ApplyTeddyHealthDecayReduction(Mathf.Max(0.01f, happinessDecay * decayScale));
             Health = Mathf.Clamp(Health - healthLoss, 0f, 100f);
         }
         else
             Health = Mathf.Clamp(Health + healthAutoRegen, 0f, 100f);
 
+        if (IsSick)
+        {
+            float sicknessLoss = ApplyTeddyHealthDecayReduction(Mathf.Max(0.01f, sicknessHealthDrainPerTick * decayScale));
+            Health = Mathf.Clamp(Health - sicknessLoss, 0f, 100f);
+        }
+
         ClampAll();
+        TrackHealthRecoveryState();
 
         OnNeedsChanged?.Invoke();
         OnHealthChanged?.Invoke(Health);
@@ -201,6 +221,7 @@ public class PetNeeds : MonoBehaviour
         Hunger = Mathf.Clamp(Hunger + amount, 0f, 100f);
         Happiness = Mathf.Clamp(Happiness + amount * 0.5f, 0f, 100f);
 
+        TrackHealthRecoveryState();
         OnNeedsChanged?.Invoke();
     }
 
@@ -224,6 +245,27 @@ public class PetNeeds : MonoBehaviour
     public void TakeNeedsDamage(float amount)
     {
         Health = Mathf.Clamp(Health - amount, 0f, 100f);
+        TrackHealthRecoveryState();
+        OnNeedsChanged?.Invoke();
+        OnHealthChanged?.Invoke(Health);
+    }
+
+    public void ApplySickness()
+    {
+        if (IsSick)
+            return;
+
+        IsSick = true;
+        OnNeedsChanged?.Invoke();
+        OnHealthChanged?.Invoke(Health);
+    }
+
+    public void CureSickness()
+    {
+        if (!IsSick)
+            return;
+
+        IsSick = false;
         OnNeedsChanged?.Invoke();
         OnHealthChanged?.Invoke(Health);
     }
@@ -241,13 +283,18 @@ public class PetNeeds : MonoBehaviour
         Hygiene = 100f;
         PlayerPrefs.SetInt(LastShowerUseKey, NowUnix());
         PlayerPrefs.Save();
+        GamesChatBotStats.RecordEvent("bath");
+        TrackHealthRecoveryState();
         OnNeedsChanged?.Invoke();
     }
 
     /// <summary> Health potion button – sets health to 100. </summary>
     public void SetHealthToFull()
     {
+        CureSickness();
         Health = 100f;
+        TrackHealthRecoveryState();
+        SaveNeeds();
         OnNeedsChanged?.Invoke();
         OnHealthChanged?.Invoke(Health);
     }
@@ -256,6 +303,54 @@ public class PetNeeds : MonoBehaviour
     public void SetEnergyToFull()
     {
         Energy = 100f;
+        TrackHealthRecoveryState();
+        SaveNeeds();
+        OnNeedsChanged?.Invoke();
+    }
+
+    public void AddHunger(float amount)
+    {
+        Hunger = Mathf.Clamp(Hunger + Mathf.Max(0f, amount), 0f, 100f);
+        TrackHealthRecoveryState();
+        SaveNeeds();
+        OnNeedsChanged?.Invoke();
+    }
+
+    public void SetHungerToFull()
+    {
+        Hunger = 100f;
+        TrackHealthRecoveryState();
+        SaveNeeds();
+        OnNeedsChanged?.Invoke();
+    }
+
+    public void ApplyCherryBoost(float hungerRestore, float durationMinutes)
+    {
+        Hunger = Mathf.Clamp(Hunger + Mathf.Max(0f, hungerRestore), 0f, 100f);
+        string until = DateTime.UtcNow.AddMinutes(Mathf.Max(0.1f, durationMinutes)).ToString("O");
+        PlayerPrefs.SetString(CHERRY_DECAY_BOOST_UNTIL_KEY, until);
+        TrackHealthRecoveryState();
+        SaveNeeds();
+        OnNeedsChanged?.Invoke();
+    }
+
+    public void ApplyTeddyBearBoost(float happinessRestore, float durationMinutes)
+    {
+        Happiness = Mathf.Clamp(Happiness + Mathf.Max(0f, happinessRestore), 0f, 100f);
+        string until = DateTime.UtcNow.AddMinutes(Mathf.Max(0.1f, durationMinutes)).ToString("O");
+        PlayerPrefs.SetString(TEDDY_HEALTH_DECAY_BOOST_UNTIL_KEY, until);
+        TrackHealthRecoveryState();
+        SaveNeeds();
+        OnNeedsChanged?.Invoke();
+    }
+
+    public void ApplyVolleyballBoost(float happinessRestore, float durationMinutes)
+    {
+        Happiness = Mathf.Clamp(Happiness + Mathf.Max(0f, happinessRestore), 0f, 100f);
+        string until = DateTime.UtcNow.AddMinutes(Mathf.Max(0.1f, durationMinutes)).ToString("O");
+        PlayerPrefs.SetString(VOLLEYBALL_HAPPINESS_DECAY_BOOST_UNTIL_KEY, until);
+        TrackHealthRecoveryState();
+        SaveNeeds();
         OnNeedsChanged?.Invoke();
     }
 
@@ -268,7 +363,9 @@ public class PetNeeds : MonoBehaviour
         Energy = 100f;
         PlayerPrefs.SetInt(LastBedUseKey, NowUnix());
         PlayerPrefs.Save();
+        GamesChatBotStats.RecordEvent("sleep");
 
+        TrackHealthRecoveryState();
         OnNeedsChanged?.Invoke();
         OnHealthChanged?.Invoke(Health);
     }
@@ -283,8 +380,21 @@ public class PetNeeds : MonoBehaviour
         Energy = Mathf.Clamp(Energy + amount, 0f, 100f);
         PlayerPrefs.SetInt(LastBedUseKey, NowUnix());
         PlayerPrefs.Save();
+        GamesChatBotStats.RecordEvent("sleep");
 
+        TrackHealthRecoveryState();
         OnNeedsChanged?.Invoke();
+    }
+
+    private void TrackHealthRecoveryState()
+    {
+        if (Health <= 25f)
+            healthRecoveryArmed = true;
+        else if (healthRecoveryArmed && Health >= 100f)
+        {
+            GamesChatBotStats.RecordEvent("recover_health_low_to_full");
+            healthRecoveryArmed = false;
+        }
     }
 
     // ============== NEW: SAVE / LOAD HELPERS ==============
@@ -296,6 +406,7 @@ public class PetNeeds : MonoBehaviour
         PlayerPrefs.SetFloat(HYGIENE_KEY, Hygiene);
         PlayerPrefs.SetFloat(HAPPINESS_KEY, Happiness);
         PlayerPrefs.SetFloat(HEALTH_KEY, Health);
+        PlayerPrefs.SetInt(SICK_KEY, IsSick ? 1 : 0);
         PlayerPrefs.Save();
     }
 
@@ -307,6 +418,7 @@ public class PetNeeds : MonoBehaviour
         Hygiene = PlayerPrefs.GetFloat(HYGIENE_KEY, 100f);
         Happiness = PlayerPrefs.GetFloat(HAPPINESS_KEY, 100f);
         Health = PlayerPrefs.GetFloat(HEALTH_KEY, 100f);
+        IsSick = PlayerPrefs.GetInt(SICK_KEY, 0) == 1;
     }
 
     private int NowUnix()
@@ -315,6 +427,50 @@ public class PetNeeds : MonoBehaviour
         if (unix > int.MaxValue) return int.MaxValue;
         if (unix < int.MinValue) return int.MinValue;
         return (int)unix;
+    }
+
+    private bool IsCherryDecayBoostActive()
+    {
+        string raw = PlayerPrefs.GetString(CHERRY_DECAY_BOOST_UNTIL_KEY, string.Empty);
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        if (!DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime untilUtc))
+            return false;
+
+        return untilUtc.ToUniversalTime() > DateTime.UtcNow;
+    }
+
+    private float ApplyTeddyHealthDecayReduction(float healthLoss)
+    {
+        if (!IsTeddyHealthDecayBoostActive())
+            return healthLoss;
+
+        return Mathf.Max(0.01f, healthLoss - 0.1f);
+    }
+
+    private bool IsTeddyHealthDecayBoostActive()
+    {
+        string raw = PlayerPrefs.GetString(TEDDY_HEALTH_DECAY_BOOST_UNTIL_KEY, string.Empty);
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        if (!DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime untilUtc))
+            return false;
+
+        return untilUtc.ToUniversalTime() > DateTime.UtcNow;
+    }
+
+    private bool IsVolleyballHappinessDecayBoostActive()
+    {
+        string raw = PlayerPrefs.GetString(VOLLEYBALL_HAPPINESS_DECAY_BOOST_UNTIL_KEY, string.Empty);
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        if (!DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime untilUtc))
+            return false;
+
+        return untilUtc.ToUniversalTime() > DateTime.UtcNow;
     }
 
     public static void ResetSessionInitialization()

@@ -18,6 +18,10 @@ GameObject:
   - component: {fileID: -1395064328878248600}
   - component: {fileID: -7981629146483367025}
   - component: {fileID: 2789842990733765442}
+  - component: {fileID: 900000000000000011}
+  - component: {fileID: 900000000000000012}
+  - component: {fileID: 900000000000000013}
+  - component: {fileID: 900000000000000014}
   m_Layer: 3
   m_Name: pet 3
   m_TagString: Player
@@ -113,7 +117,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 2
+  m_GravityScale: 3
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -123,8 +127,8 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 1
   m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
+  m_CollisionDetection: 1
+  m_Constraints: 4
 --- !u!61 &8538577812462831588
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -159,7 +163,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.0043807626, y: -0.02856502}
+  m_Offset: {x: 0.008585967, y: -0.044605456}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -169,7 +173,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.24264091, y: 0.26286972}
+  m_Size: {x: 0.14068991, y: 0.21377148}
   m_EdgeRadius: 0
 --- !u!114 &-1060944871643590457
 MonoBehaviour:
@@ -180,10 +184,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 4661382516410726313}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5ee0fd83d07187d4ea82387554cb342d, type: 3}
+  m_Script: {fileID: 11500000, guid: 71874b3548dbc754d967f4766081bd97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  speed: 5
+  moveSpeed: 5
+  speedBoostMultiplier: 1.25
+  enableHungerSpeedPenalty: 1
+  lowHungerThreshold: 35
+  emptyHungerThreshold: 5
+  minSpeedMultiplierAtZeroHunger: 0.6
 --- !u!95 &2244422854541334152
 Animator:
   serializedVersion: 7
@@ -220,6 +229,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JumpTwice
   moveSpeed: 5
   jumpForce: 10
+  jumpBoostMultiplier: 1.18
+  enableHungerSpeedPenalty: 1
+  lowHungerThreshold: 35
+  emptyHungerThreshold: 5
+  minSpeedMultiplierAtZeroHunger: 0.6
   extraJumps: 1
 --- !u!114 &-1395064328878248600
 MonoBehaviour:
@@ -269,10 +283,84 @@ MonoBehaviour:
   Hygiene: 100
   Happiness: 100
   Health: 100
-  tickSeconds: 5
-  hungerDecay: 3
-  energyDecayIdle: 1
-  hygieneDecayIdle: 0.5
-  happinessDecayLow: 3
+  tickSeconds: 6
+  hungerDecay: 1.5
+  energyDecay: 1
+  hygieneDecay: 1
+  happinessDecay: 0.5
+  healthAutoRegen: -0.5
+  enableSlowerOverallDecay: 1
+  overallDecayMultiplier: 0.7
+  otherNeedsSlowMultiplier: 0.9
+  minGapAboveHappiness: 0.1
   lowNeed: 20
-  dangerNeed: 5
+  hungerPerApple: 5
+--- !u!114 &900000000000000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4661382516410726313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6cfa931c9b89e04e83ee76b439e27cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  growthStep: 0.2
+  maxScale: 10
+--- !u!114 &900000000000000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4661382516410726313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 575ea432731047543a5b971522715c04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  tintAlpha: 1
+--- !u!114 &900000000000000013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4661382516410726313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57fa4954a2570ef4c9727e80e4d3011a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  defaultScale: 7
+--- !u!114 &900000000000000014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4661382516410726313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d26b52a4da0204438093f53b7d45d4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUnstuckHitbox
+  inputThreshold: 0.2
+  minMovementPerFixedStep: 0.0004
+  stuckTime: 0.1
+  unstuckCooldown: 0.05
+  horizontalNudge: 0.02
+  verticalNudge: 0.005
+  pushSpeed: 1.2
+  maxPushesPerSecond: 10
+  requireBlockingSideContact: 1
+  sideNormalThreshold: 0.35
+  contactEscapeBias: 0.03
+  forceZeroFriction: 1
+  setContinuousCollision: 1
+  setInterpolation: 1
+  smoothBoxColliderEdges: 1
+  boxColliderEdgeRadius: 0.01
+  centerBoxColliderOnX: 1

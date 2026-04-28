@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public static class SaveData
@@ -92,6 +93,7 @@ public static class SaveData
         IsHardResetInProgress = true;
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
+        DeleteResettableFiles();
 
         loaded = false;
         collected.Clear();
@@ -104,5 +106,25 @@ public static class SaveData
         collected.Clear();
         appleCountCache = 0;
         IsHardResetInProgress = false;
+    }
+
+    static void DeleteResettableFiles()
+    {
+        TryDeleteFile(Path.Combine(Application.persistentDataPath, "player_profile_v1.json"));
+    }
+
+    static void TryDeleteFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            return;
+
+        try
+        {
+            File.Delete(path);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning("[SaveData] Could not delete reset file: " + ex.Message);
+        }
     }
 }

@@ -47,6 +47,10 @@ public class AppleCollect : MonoBehaviour
         else
             AppleCurrency.Add(1);
 
+        // 2.5) Play apple pickup SFX through the shared audio manager so SFX mute works.
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.foodcollect);
+
         // 3) Optional player growth (keep your logic)
         var growth = other.GetComponent<PlayerGrowth>();
         if (growth != null)

@@ -23,11 +23,17 @@ public class CheckPoint : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         var ph = other.GetComponent<PlayerHealth>();
+        Vector3 checkpointPos = transform.position + (Vector3)spawnOffset;
+
         if (ph != null)
         {
-            ph.SetCheckpoint(transform.position + (Vector3)spawnOffset);
+            ph.SetCheckpoint(checkpointPos);
             ph.HealToFull();
         }
+
+        var rof = other.GetComponent<RespawnOnFall>();
+        if (rof != null)
+            rof.SetRespawnPosition(checkpointPos);
 
         activated = true;
         if (sr != null && activeSprite != null) sr.sprite = activeSprite;

@@ -4,6 +4,8 @@ using TMPro;
 
 public class LevelsDropDown : MonoBehaviour
 {
+    public static bool IsMenuOpen { get; private set; }
+
     [Header("Menu Parts")]
     [SerializeField] private GameObject levelsMenu; // the panel that contains all the level buttons
     [SerializeField] private Image dimBackground; // full-screen Image behind the panel (optional)
@@ -53,6 +55,11 @@ public class LevelsDropDown : MonoBehaviour
     }
 
     // --- Public API for your OnClick on the green "LEVELS" button ---
+    public static void SetMenuOpenState(bool isOpen)
+    {
+        IsMenuOpen = isOpen;
+    }
+
     public void OpenMenu()
     {
         if (menuCg == null) return;
@@ -68,6 +75,8 @@ public class LevelsDropDown : MonoBehaviour
             dimCg.alpha = dimAlpha;
             dimCg.blocksRaycasts = true;
         }
+
+        SetMenuOpenState(true);
 
         // Time.timeScale = 0f; // pause game
     }
@@ -88,11 +97,13 @@ public class LevelsDropDown : MonoBehaviour
             dimBackground.gameObject.SetActive(false);
         }
 
+        SetMenuOpenState(false);
         Time.timeScale = 1f; // resume game
     }
 
     void HideMenuImmediate()
     {
+        SetMenuOpenState(false);
         if (levelsMenu != null)
         {
             if (!levelsMenu.activeSelf) levelsMenu.SetActive(false);
@@ -203,6 +214,11 @@ public class LevelsDropDown : MonoBehaviour
         {
             Debug.LogWarning(msg);
         }
+    }
+
+    void OnDisable()
+    {
+        SetMenuOpenState(false);
     }
 
     private void ClearWarning()

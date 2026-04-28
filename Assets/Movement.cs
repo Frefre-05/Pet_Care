@@ -3,7 +3,11 @@
 [RequireComponent(typeof(PlayerUnstuckHitbox))]
 public class PlayerMovement : MonoBehaviour
 {
+    private const string SpeedBoostUntilKey = "PLAYER_SPEED_BOOST_UNTIL_UTC";
+
     public float moveSpeed = 5f;
+    [Header("Shop Boosts")]
+    [SerializeField] private float speedBoostMultiplier = 1.25f;
     [Header("Hunger Speed Penalty (Reversible)")]
     [SerializeField] private bool enableHungerSpeedPenalty = true;
     [Range(0f, 100f)] [SerializeField] private float lowHungerThreshold = 35f;
@@ -29,6 +33,14 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (LevelsDropDown.IsMenuOpen)
+        {
+            moveInput = 0f;
+            if (anim != null)
+                anim.SetFloat("Speed", 0f);
+            return;
+        }
+
         moveInput = Input.GetAxisRaw("Horizontal");
 
         // Animation
@@ -43,7 +55,16 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        float speedMul = GetHungerSpeedMultiplier();
+        if (rb == null)
+            return;
+
+        if (LevelsDropDown.IsMenuOpen)
+        {
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            return;
+        }
+
+        float speedMul = GetHungerSpeedMultiplier() * GetShopSpeedMultiplier();
         rb.linearVelocity = new Vector2(moveInput * moveSpeed * speedMul, rb.linearVelocity.y);
     }
 
@@ -57,5 +78,25 @@ public class PlayerMovement : MonoBehaviour
         if (hunger >= lowHungerThreshold) return 1f;
         float t = Mathf.InverseLerp(lowHungerThreshold, emptyHungerThreshold, hunger);
         return Mathf.Lerp(1f, minSpeedMultiplierAtZeroHunger, t);
+    }
+
+    private float GetShopSpeedMultiplier()
+    {
+        if (!IsBoostActive(SpeedBoostUntilKey))
+            return 1f;
+
+        return Mathf.Max(1f, speedBoostMultiplier);
+    }
+
+    private bool IsBoostActive(string key)
+    {
+        string raw = PlayerPrefs.GetString(key, string.Empty);
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        if (!System.DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out System.DateTime untilUtc))
+            return false;
+
+        return System.DateTime.UtcNow < untilUtc.ToUniversalTime();
     }
 }

@@ -10,6 +10,7 @@ public class BedSleepInteractor : MonoBehaviour
     [Header("References")]
     [SerializeField] private PetNeeds petNeeds;
     [SerializeField] private BlackoutFaders blackoutFader;
+    [SerializeField] private AudioSource sleepSound;
     [SerializeField] private KeyCode sleepKey = KeyCode.E;
     [SerializeField] private float sleepDuration = 3f; // how long to "sleep"
     [SerializeField] private float fadeDuration = 0.25f;
@@ -107,6 +108,9 @@ public class BedSleepInteractor : MonoBehaviour
         var pn = other.GetComponentInChildren<PetNeeds>();
         if (pn != null)
             petNeeds = pn;
+
+        if (!isSleeping && Input.GetKey(sleepKey))
+            StartCoroutine(SleepSequence());
     }
 
     private void OnTriggerExit2D(Collider2D other)

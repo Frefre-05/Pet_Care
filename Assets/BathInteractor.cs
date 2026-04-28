@@ -9,6 +9,7 @@ public class BathInteractor : MonoBehaviour
     [Header("References")]
     [SerializeField] private PetNeeds petNeeds;
     [SerializeField] private BlackoutFaders blackoutFader;
+    [SerializeField] private AudioSource bathSound;
     [SerializeField] private KeyCode bathKey = KeyCode.E;
     [SerializeField] private float bathDuration = 2f; // how long to “shower”
     [SerializeField] private float fadeDuration = 0.25f;
@@ -108,6 +109,9 @@ public class BathInteractor : MonoBehaviour
         var pn = other.GetComponentInChildren<PetNeeds>();
         if (pn != null)
             petNeeds = pn;
+
+        if (!isBathing && Input.GetKey(bathKey))
+            StartCoroutine(BathSequence());
     }
 
     private void OnTriggerExit2D(Collider2D other)

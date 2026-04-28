@@ -63,11 +63,21 @@ public class TutorialManager : MonoBehaviour
         }
 
         Instance = this;
+        TryAutoResolvePanelReferences();
     }
 
     private void Start()
     {
-        ShowStartPanel();
+        if (HasValidStartPanel())
+            ShowStartPanel();
+        else
+            RestoreGameplayIfPanelsClosed();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void LateUpdate()
@@ -113,11 +123,22 @@ public class TutorialManager : MonoBehaviour
         ShowApplePanel();
     }
 
+    public void RestoreGameplayIfPanelsClosed()
+    {
+        bool startVisible = startPanel != null && startPanel.activeInHierarchy;
+        bool appleVisible = applePanel != null && applePanel.activeInHierarchy;
+        if (startVisible || appleVisible)
+            return;
+
+        ResumeGame();
+    }
+
     // ====== INTERNAL ======
 
     private void ShowStartPanel()
     {
         if (hasShownStart) return;
+        if (!HasValidStartPanel()) return;
         hasShownStart = true;
 
         if (startPanel != null)
@@ -130,6 +151,8 @@ public class TutorialManager : MonoBehaviour
 
     private void ShowApplePanel()
     {
+        if (!HasValidApplePanel()) return;
+
         if (applePanel != null)
             applePanel.SetActive(true);
 
@@ -181,6 +204,67 @@ public class TutorialManager : MonoBehaviour
         }
 
         RestoreHiddenStartTexts();
+    }
+
+    private bool HasValidStartPanel()
+    {
+        return startPanel != null;
+    }
+
+    private bool HasValidApplePanel()
+    {
+        return applePanel != null;
+    }
+
+    private void TryAutoResolvePanelReferences()
+    {
+        if (startPanel == null)
+            startPanel = FindPanelByNameHint("start");
+
+        if (applePanel == null)
+            applePanel = FindPanelByNameHint("apple");
+
+        if (startPanelText == null && autoFindStartPanelText && startPanel != null)
+            startPanelText = FindBestStartPanelText();
+    }
+
+    private GameObject FindPanelByNameHint(string hint)
+    {
+        if (string.IsNullOrWhiteSpace(hint))
+            return null;
+
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas canvas = canvases[i];
+            if (canvas == null)
+                continue;
+
+            Transform[] children = canvas.GetComponentsInChildren<Transform>(true);
+            for (int j = 0; j < children.Length; j++)
+            {
+                Transform child = children[j];
+                if (child == null)
+                    continue;
+
+                string n = child.name == null ? string.Empty : child.name.ToLowerInvariant();
+                if (!n.Contains(hint) || !n.Contains("panel"))
+                    continue;
+
+                if (child.GetComponent<RectTransform>() == null)
+                    continue;
+
+                if (child.GetComponent<UnityEngine.UI.Button>() != null)
+                    continue;
+
+                if (n.Contains("restart"))
+                    continue;
+
+                return child.gameObject;
+            }
+        }
+
+        return null;
     }
 
     private void PrepareStartPanelText()

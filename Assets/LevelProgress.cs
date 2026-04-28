@@ -8,6 +8,7 @@ public class LevelProgress : MonoBehaviour
     public static event Action OnProgressChanged;
 
     const string KEY = "MAX_UNLOCKED";
+    static string CompletedKey(int levelIndex) => "LEVEL_COMPLETED_" + Mathf.Clamp(levelIndex, 0, 4);
     static bool initialized;
     static LevelProgress instance;
 
@@ -44,18 +45,27 @@ public class LevelProgress : MonoBehaviour
     public static bool CanPlay(int requiredIndex)
     {
         EnsureInitialized();
-        return MaxUnlocked >= requiredIndex;
+        requiredIndex = Mathf.Clamp(requiredIndex, 0, 4);
+        if (MaxUnlocked >= requiredIndex)
+            return true;
+
+        // Never relock a level the player has already completed.
+        return IsCompleted(requiredIndex);
     }
 
     // Call when a level is completed. Pass its index (see mapping below).
     public static void MarkCompleted(int justFinishedIndex)
     {
         EnsureInitialized();
+        justFinishedIndex = Mathf.Clamp(justFinishedIndex, 0, 4);
+        PlayerPrefs.SetInt(CompletedKey(justFinishedIndex), 1);
 
         // Only allow sequential progression: you can only complete a level that is currently unlocked.
         // This prevents accidental "unlock all" if an endpoint is misconfigured with a wrong index.
         if (justFinishedIndex > MaxUnlocked)
         {
+            PlayerPrefs.Save();
+            OnProgressChanged?.Invoke();
             Debug.LogWarning($"[LevelProgress] Ignored out-of-order completion index {justFinishedIndex}. Current MaxUnlocked is {MaxUnlocked}.");
             return;
         }
@@ -66,9 +76,10 @@ public class LevelProgress : MonoBehaviour
         {
             MaxUnlocked = next;
             PlayerPrefs.SetInt(KEY, MaxUnlocked);
-            PlayerPrefs.Save();
-            OnProgressChanged?.Invoke();
         }
+
+        PlayerPrefs.Save();
+        OnProgressChanged?.Invoke();
     }
 
     // For debugging, you can add a reset method if you want.
@@ -77,7 +88,16 @@ public class LevelProgress : MonoBehaviour
         EnsureInitialized();
         MaxUnlocked = 0;
         PlayerPrefs.SetInt(KEY, 0);
+        for (int i = 0; i <= 4; i++)
+            PlayerPrefs.DeleteKey(CompletedKey(i));
         PlayerPrefs.Save();
         OnProgressChanged?.Invoke();
+    }
+
+    public static bool IsCompleted(int levelIndex)
+    {
+        EnsureInitialized();
+        levelIndex = Mathf.Clamp(levelIndex, 0, 4);
+        return PlayerPrefs.GetInt(CompletedKey(levelIndex), 0) == 1;
     }
 }

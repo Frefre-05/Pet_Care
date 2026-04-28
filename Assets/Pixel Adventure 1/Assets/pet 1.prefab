@@ -163,7 +163,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.0043807626, y: -0.024376146}
+  m_Offset: {x: 0.008585967, y: -0.044605456}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -173,7 +173,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.24264091, y: 0.25449198}
+  m_Size: {x: 0.14068991, y: 0.21377148}
   m_EdgeRadius: 0
 --- !u!95 &-3124591759951934149
 Animator:
@@ -211,6 +211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JumpTwice
   moveSpeed: 5
   jumpForce: 10
+  jumpBoostMultiplier: 1.18
   enableHungerSpeedPenalty: 1
   lowHungerThreshold: 35
   emptyHungerThreshold: 5
@@ -299,6 +300,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
+  speedBoostMultiplier: 1.25
   enableHungerSpeedPenalty: 1
   lowHungerThreshold: 35
   emptyHungerThreshold: 5
@@ -346,12 +348,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUnstuckHitbox
   inputThreshold: 0.2
-  minMovementPerFixedStep: 0.001
-  stuckTime: 0.2
-  unstuckCooldown: 0.25
-  horizontalNudge: 0.08
-  verticalNudge: 0.08
-  pushSpeed: 2.5
+  minMovementPerFixedStep: 0.0004
+  stuckTime: 0.1
+  unstuckCooldown: 0.05
+  horizontalNudge: 0.02
+  verticalNudge: 0.005
+  pushSpeed: 1.2
+  maxPushesPerSecond: 10
+  requireBlockingSideContact: 1
+  sideNormalThreshold: 0.35
+  contactEscapeBias: 0.03
   forceZeroFriction: 1
   setContinuousCollision: 1
   setInterpolation: 1

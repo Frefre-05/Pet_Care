@@ -39,14 +39,14 @@ public class SecretResetHotkey : MonoBehaviour
         {
             bool ctrlHeld = k.leftCtrlKey.isPressed || k.rightCtrlKey.isPressed;
             bool shiftHeld = k.leftShiftKey.isPressed || k.rightShiftKey.isPressed;
-            if (ctrlHeld && shiftHeld && k.f6Key.wasPressedThisFrame)
+            if (ctrlHeld && shiftHeld && (k.sKey.wasPressedThisFrame || k.f6Key.wasPressedThisFrame))
                 return true;
         }
 #endif
 
         bool legacyHeld = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) &&
                           (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
-        return legacyHeld && Input.GetKeyDown(KeyCode.F6);
+        return legacyHeld && (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.F6));
     }
 
     private System.Collections.IEnumerator ExecuteHardResetRoutine()

@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class OptionsMenu : MonoBehaviour
@@ -9,8 +10,12 @@ public class OptionsMenu : MonoBehaviour
     public AudioSource musicSource;
     public AudioSource sfxSource;
 
+    [Header("SFX Feedback")]
+    [SerializeField] private float sfxStatusTopInset = 24f;
+
     private bool musicMuted = false;
     private bool sfxMuted = false;
+    private TextMeshProUGUI sfxStatusText;
 
     // Called by UI Button: "Options"
     public void OpenSettings()
@@ -32,6 +37,9 @@ public class OptionsMenu : MonoBehaviour
             cg.interactable = true;
             cg.blocksRaycasts = true;
         }
+
+        RefreshAudioStateCache();
+        UpdateSfxStatusText(forceShow: false);
     }
 
     // Called by UI Button: "Back"
@@ -62,7 +70,7 @@ public class OptionsMenu : MonoBehaviour
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.ToggleMusicMute();
-            musicMuted = AudioManager.Instance.IsMusicMuted;
+            musicMuted = AudioManager.Instance.IsMusicPaused;
             return;
         }
 
@@ -83,11 +91,14 @@ public class OptionsMenu : MonoBehaviour
         {
             AudioManager.Instance.ToggleSfxMute();
             sfxMuted = AudioManager.Instance.IsSfxMuted;
-            return;
+        }
+        else
+        {
+            sfxMuted = !sfxMuted;
+            if (sfxSource != null) sfxSource.mute = sfxMuted;
         }
 
-        sfxMuted = !sfxMuted;
-        if (sfxSource != null) sfxSource.mute = sfxMuted;
+        UpdateSfxStatusText(forceShow: true);
     }
 
     private bool IsSettingsOpen()
@@ -111,5 +122,73 @@ public class OptionsMenu : MonoBehaviour
         found = GameObject.Find("OptionsPanel");
         if (found != null) return found;
         return GameObject.Find("Settings");
+    }
+
+    private void RefreshAudioStateCache()
+    {
+        if (AudioManager.Instance != null)
+        {
+            musicMuted = AudioManager.Instance.IsMusicPaused;
+            sfxMuted = AudioManager.Instance.IsSfxMuted;
+            return;
+        }
+
+        if (musicSource != null)
+            musicMuted = musicSource.mute;
+        if (sfxSource != null)
+            sfxMuted = sfxSource.mute;
+    }
+
+    private void UpdateSfxStatusText(bool forceShow)
+    {
+        EnsureSfxStatusText();
+        if (sfxStatusText == null)
+            return;
+
+        sfxStatusText.text = sfxMuted
+            ? "Sound Effects are now disabled"
+            : "Sound Effects are now active";
+        sfxStatusText.color = sfxMuted
+            ? new Color32(255, 196, 96, 255)
+            : new Color32(156, 255, 168, 255);
+        sfxStatusText.gameObject.SetActive(forceShow || IsSettingsOpen());
+    }
+
+    private void EnsureSfxStatusText()
+    {
+        if (sfxStatusText != null)
+            return;
+
+        if (settingsPanel == null)
+            settingsPanel = FindSettingsPanelFallback();
+        if (settingsPanel == null)
+            return;
+
+        Transform existing = settingsPanel.transform.Find("ToggleSfxStatusText");
+        if (existing != null)
+        {
+            sfxStatusText = existing.GetComponent<TextMeshProUGUI>();
+            if (sfxStatusText != null)
+                return;
+        }
+
+        GameObject textObject = new GameObject("ToggleSfxStatusText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.SetParent(settingsPanel.transform, false);
+        textRect.SetAsLastSibling();
+        textRect.anchorMin = new Vector2(0.5f, 1f);
+        textRect.anchorMax = new Vector2(0.5f, 1f);
+        textRect.pivot = new Vector2(0.5f, 1f);
+        textRect.anchoredPosition = new Vector2(0f, -sfxStatusTopInset);
+        textRect.sizeDelta = new Vector2(520f, 42f);
+
+        sfxStatusText = textObject.GetComponent<TextMeshProUGUI>();
+        sfxStatusText.alignment = TextAlignmentOptions.Center;
+        sfxStatusText.fontSize = 22f;
+        sfxStatusText.outlineWidth = 0.22f;
+        sfxStatusText.outlineColor = new Color32(0, 0, 0, 255);
+        sfxStatusText.raycastTarget = false;
+        sfxStatusText.text = string.Empty;
+        sfxStatusText.gameObject.SetActive(false);
     }
 }

@@ -30,4 +30,17 @@ public class CameraFollowing2 : MonoBehaviour
     {
         target = newTarget;
     }
+
+    public void SnapToTarget()
+    {
+        if (target == null) return;
+
+        Vector3 targetPos = target.position;
+        targetPos.z = transform.position.z;
+        if (lockY)
+            targetPos.y = transform.position.y;
+
+        velocity = Vector3.zero;
+        transform.position = targetPos;
+    }
 }

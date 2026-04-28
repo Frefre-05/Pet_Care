@@ -44,22 +44,21 @@ public class LevelPurchaseButton : MonoBehaviour
 
     public void RefreshInteractable()
     {
-        // Grey out if player can't afford (purely visual)
-        bool canAfford = AppleCurrency.Get() >= cost;
         bool energyOk = IsEnergyGatePassed();
         bool progressOk = IsProgressGatePassed();
-        if (_btn) _btn.interactable = canAfford && energyOk && progressOk;
+        if (_btn) _btn.interactable = energyOk && progressOk;
     }
 
     void TryBuyAndGo()
     {
         if (_isLoading) return;
 
-        if (AppleCurrency.Get() < cost)
+        bool alreadyCompleted = IsTargetLevelAlreadyCompleted();
+        if (!alreadyCompleted && AppleCurrency.Get() < cost)
         {
             if (warningText)
             {
-                warningText.text = $"Need {cost} apples";
+                warningText.text = $"Need {cost} Gold Coins";
                 CancelInvoke(nameof(ClearWarning));
                 Invoke(nameof(ClearWarning), warningSeconds);
             }
@@ -92,7 +91,7 @@ public class LevelPurchaseButton : MonoBehaviour
             return;
         }
 
-        if (deductCostOnLoad && !AppleCurrency.Spend(cost))
+        if (!alreadyCompleted && deductCostOnLoad && !AppleCurrency.Spend(cost))
             return;
 
         _isLoading = true;
@@ -117,6 +116,14 @@ public class LevelPurchaseButton : MonoBehaviour
         PetNeeds petNeeds = FindAnyObjectByType<PetNeeds>();
         if (petNeeds == null) return true;
         return petNeeds.Energy >= minEnergyPercent;
+    }
+
+    private bool IsTargetLevelAlreadyCompleted()
+    {
+        int required = ResolveRequiredUnlockedIndex();
+        if (required < 0)
+            return false;
+        return LevelProgress.IsCompleted(required);
     }
 
     private bool IsProgressGatePassed()

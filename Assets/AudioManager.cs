@@ -58,7 +58,9 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        if (musicSource.clip == clip && musicSource.isPlaying)
+        bool pauseRequested = IsMusicPauseRequested();
+        bool sameClip = musicSource.clip == clip;
+        if (sameClip && (musicSource.isPlaying || pauseRequested))
         {
             return;
         }
@@ -74,12 +76,20 @@ public class AudioManager : MonoBehaviour
             musicSource.clip = clip;
             musicSource.loop = true;
             musicSource.volume = 1f;
-            musicSource.Play();
+            if (pauseRequested)
+            {
+                musicSource.Play();
+                musicSource.Pause();
+            }
+            else
+            {
+                musicSource.Play();
+            }
             return;
         }
 
         float fade = fadeDurationOverride >= 0f ? fadeDurationOverride : GetRandomFadeDuration();
-        musicFadeRoutine = StartCoroutine(FadeToClip(clip, fade));
+        musicFadeRoutine = StartCoroutine(FadeToClip(clip, fade, pauseRequested));
     }
 
     private float GetRandomFadeDuration()
@@ -89,7 +99,7 @@ public class AudioManager : MonoBehaviour
         return Random.Range(min, max);
     }
 
-    private IEnumerator FadeToClip(AudioClip newClip, float fadeDuration)
+    private IEnumerator FadeToClip(AudioClip newClip, float fadeDuration, bool pauseRequested)
     {
         if (musicSource == null)
         {
@@ -112,6 +122,14 @@ public class AudioManager : MonoBehaviour
         musicSource.loop = true;
         musicSource.Play();
 
+        if (pauseRequested)
+        {
+            musicSource.Pause();
+            musicSource.volume = 1f;
+            musicFadeRoutine = null;
+            yield break;
+        }
+
         t = 0f;
         while (t < duration)
         {
@@ -132,17 +150,46 @@ public class AudioManager : MonoBehaviour
     }
 
     public bool IsMusicMuted => musicSource != null && musicSource.mute;
+    public bool IsMusicPaused => musicSource != null && !musicSource.isPlaying && musicSource.clip != null;
     public bool IsSfxMuted => SFXSource != null && SFXSource.mute;
 
     public void ToggleMusicMute()
     {
-        SetMusicMuted(!IsMusicMuted);
+        SetMusicPaused(!IsMusicPaused);
     }
 
     public void SetMusicMuted(bool muted)
     {
-        if (musicSource != null) musicSource.mute = muted;
-        PlayerPrefs.SetInt(MusicMutedKey, muted ? 1 : 0);
+        SetMusicPaused(muted);
+    }
+
+    public void SetMusicPaused(bool paused)
+    {
+        if (musicFadeRoutine != null)
+        {
+            StopCoroutine(musicFadeRoutine);
+            musicFadeRoutine = null;
+        }
+
+        if (musicSource != null)
+        {
+            if (paused)
+            {
+                musicSource.Pause();
+            }
+            else
+            {
+                musicSource.UnPause();
+                if (!musicSource.isPlaying && musicSource.clip != null)
+                {
+                    musicSource.Play();
+                }
+            }
+
+            musicSource.mute = false;
+        }
+
+        PlayerPrefs.SetInt(MusicMutedKey, paused ? 1 : 0);
         PlayerPrefs.Save();
     }
 
@@ -160,9 +207,14 @@ public class AudioManager : MonoBehaviour
 
     private void ApplySavedAudioState()
     {
-        bool musicMuted = PlayerPrefs.GetInt(MusicMutedKey, 0) == 1;
+        bool musicPaused = PlayerPrefs.GetInt(MusicMutedKey, 0) == 1;
         bool sfxMuted = PlayerPrefs.GetInt(SfxMutedKey, 0) == 1;
-        if (musicSource != null) musicSource.mute = musicMuted;
+        SetMusicPaused(musicPaused);
         if (SFXSource != null) SFXSource.mute = sfxMuted;
+    }
+
+    private bool IsMusicPauseRequested()
+    {
+        return PlayerPrefs.GetInt(MusicMutedKey, 0) == 1;
     }
 }

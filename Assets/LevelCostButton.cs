@@ -20,7 +20,7 @@ public class LevelCostButton : MonoBehaviour
     [Header("Optional visuals")]
     [SerializeField] private GameObject lockIcon; // small padlock image (optional)
     [SerializeField] private CanvasGroup greyOut; // to fade the button if locked (optional)
-    [SerializeField] private TMP_Text warningText; // optional TMP text to show "Need X apples"
+    [SerializeField] private TMP_Text warningText; // optional TMP text to show "Need X Gold Coins"
     [SerializeField] private float warningDuration = 1.5f;
 
     [Header("Energy Gate (Reversible)")]
@@ -48,17 +48,15 @@ public class LevelCostButton : MonoBehaviour
         RefreshInteractable();
     }
 
-    /// <summary>Call this if your apple count changes while the menu is open.</summary>
+    /// <summary>Call this if your currency count changes while the menu is open.</summary>
     public void RefreshInteractable()
     {
-        int apples = AppleCurrency.Get();
-        bool canAfford = apples >= cost;
         bool energyOk = IsEnergyGatePassed();
         bool progressOk = IsProgressGatePassed();
-        bool canUse = canAfford && energyOk && progressOk;
+        bool canUse = energyOk && progressOk;
 
         if (btn) btn.interactable = canUse;
-        if (lockIcon) lockIcon.SetActive(!canUse);
+        if (lockIcon) lockIcon.SetActive(!progressOk);
         if (greyOut) greyOut.alpha = canUse ? 1f : 0.5f;
     }
 
@@ -67,7 +65,8 @@ public class LevelCostButton : MonoBehaviour
         if (isLoading) return;
 
         int apples = AppleCurrency.Get();
-        if (apples < cost)
+        bool alreadyCompleted = IsTargetLevelAlreadyCompleted();
+        if (!alreadyCompleted && apples < cost)
         {
             ShowWarning();
             RefreshInteractable();
@@ -89,7 +88,7 @@ public class LevelCostButton : MonoBehaviour
         }
 
         // Optional deduction. Disabled by default to keep apple count consistent across scenes.
-        if (deductCostOnLoad)
+        if (!alreadyCompleted && deductCostOnLoad)
             AppleCurrency.Set(apples - cost);
         isLoading = true;
 
@@ -106,13 +105,13 @@ public class LevelCostButton : MonoBehaviour
     {
         if (warningText)
         {
-            warningText.text = $"Need {cost} apples";
+            warningText.text = $"Need {cost} Gold Coins";
             CancelInvoke(nameof(ClearWarning));
             Invoke(nameof(ClearWarning), warningDuration);
         }
         else
         {
-            Debug.LogWarning($"Not enough apples. Requires {cost}.");
+            Debug.LogWarning($"Not enough Gold Coins. Requires {cost}.");
         }
     }
 
@@ -127,6 +126,13 @@ public class LevelCostButton : MonoBehaviour
         PetNeeds petNeeds = FindAnyObjectByType<PetNeeds>();
         if (petNeeds == null) return true;
         return petNeeds.Energy >= minEnergyPercent;
+    }
+
+    private bool IsTargetLevelAlreadyCompleted()
+    {
+        int required = ResolveRequiredUnlockedIndex();
+        if (required < 0) return false;
+        return LevelProgress.IsCompleted(required);
     }
 
     private bool IsProgressGatePassed()
