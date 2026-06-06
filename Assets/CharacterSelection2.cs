@@ -80,7 +80,7 @@ public class CharacterSelection2 : MonoBehaviour
         PlayerPrefs.Save();
         SaveProfileToDisk(selectedCharacter, GetEffectivePlayerName());
 
-        if (clickSfx) clickSfx.Play();
+        if (AudioManager.Instance == null && clickSfx) clickSfx.Play();
 
         // Animate buttons
         for (int i = 0; i < characterButtons.Length; i++)

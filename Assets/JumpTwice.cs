@@ -22,11 +22,15 @@ public class JumpTwice : MonoBehaviour
     [Header("Jump Settings")]
     public int extraJumps = 1; // 1 = allows double jump
     [SerializeField] private float fallingPlatformGroundGraceSeconds = 0.35f;
+    [SerializeField] private float groundCheckDepth = 0.08f;
+    [SerializeField] private float groundCheckWidthMultiplier = 0.9f;
+    [SerializeField] private LayerMask groundLayers = Physics2D.DefaultRaycastLayers;
     private int jumpsLeft;
 
     private Rigidbody2D rb;
     private Animator anim;
     private PetNeeds petNeeds;
+    private Collider2D bodyCollider;
 
     private bool isGrounded;
     private bool wasAtFanTop;
@@ -39,6 +43,7 @@ public class JumpTwice : MonoBehaviour
         anim = GetComponent<Animator>();
         jumpsLeft = Mathf.Max(0, extraJumps);
         petNeeds = FindAnyObjectByType<PetNeeds>();
+        bodyCollider = GetPrimaryCollider();
         CacheAnimatorParameters();
 
         if (rb == null)
@@ -46,12 +51,21 @@ public class JumpTwice : MonoBehaviour
             Debug.LogError("[JumpTwice] Missing Rigidbody2D on " + name + ".", this);
             enabled = false;
         }
+
+        if (bodyCollider == null)
+        {
+            Debug.LogError("[JumpTwice] Missing a non-trigger Collider2D on " + name + ".", this);
+            enabled = false;
+        }
     }
 
     void Update()
     {
-        if (rb == null)
+        if (rb == null || bodyCollider == null)
             return;
+
+        bool groundByCollider = IsGroundedByCollider();
+        isGrounded = groundByCollider || FallWhenTouched.WasRecentlyRidingFallingPlatform(transform, fallingPlatformGroundGraceSeconds);
 
         if (LevelsDropDown.IsMenuOpen)
         {
@@ -59,7 +73,7 @@ public class JumpTwice : MonoBehaviour
             if (anim != null)
             {
                 SetAnimatorBool("isRunning", false);
-                SetAnimatorBool("isGrounded", Mathf.Abs(rb.linearVelocity.y) < 0.01f);
+                SetAnimatorBool("isGrounded", isGrounded);
             }
             return;
         }
@@ -67,10 +81,6 @@ public class JumpTwice : MonoBehaviour
         // --- Move ---
         float move = Input.GetAxisRaw("Horizontal");
         rb.linearVelocity = new Vector2(move * moveSpeed * GetHungerSpeedMultiplier(), rb.linearVelocity.y);
-
-        // --- Simple ground check (no groundCheck object) ---
-        // If player's vertical speed is almost zero AND player is near ground
-        isGrounded = Mathf.Abs(rb.linearVelocity.y) < 0.01f || FallWhenTouched.WasRecentlyRidingFallingPlatform(transform, fallingPlatformGroundGraceSeconds);
 
         bool fanBlocksNormalJump = FanUpdraft.IsJumpBlockedUntilLiftTop(transform);
         bool fanAllowsOnlyAirJump = FanUpdraft.IsPlayerAtFanTop(transform);
@@ -89,6 +99,7 @@ public class JumpTwice : MonoBehaviour
                 if (jumpsLeft > 0)
                 {
                     PlayFirstAvailableState(AirJumpStates);
+                    PlayJumpSfx();
                     rb.linearVelocity = new Vector2(rb.linearVelocity.x, GetCurrentJumpForce());
                     jumpsLeft--;
                 }
@@ -99,6 +110,7 @@ public class JumpTwice : MonoBehaviour
             if (isGrounded)
             {
                 PlayFirstAvailableState(GroundJumpStates);
+                PlayJumpSfx();
                 FallWhenTouched.NotifyPlayerJumpedFromFallingPlatform(transform);
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, GetCurrentJumpForce());
                 jumpsLeft = Mathf.Max(0, extraJumps); // reset extra jumps when on ground
@@ -106,6 +118,7 @@ public class JumpTwice : MonoBehaviour
             else if (jumpsLeft > 0)
             {
                 PlayFirstAvailableState(AirJumpStates);
+                PlayJumpSfx();
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, GetCurrentJumpForce());
                 jumpsLeft--;
             }
@@ -198,5 +211,54 @@ public class JumpTwice : MonoBehaviour
             anim.SetBool(parameterName, value);
         else if (parameterName == "isGrounded" && animatorHasIsGrounded)
             anim.SetBool(parameterName, value);
+    }
+
+    private void PlayJumpSfx()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayJumpSfx();
+    }
+
+    private Collider2D GetPrimaryCollider()
+    {
+        Collider2D[] colliders = GetComponents<Collider2D>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider2D candidate = colliders[i];
+            if (candidate != null && candidate.enabled && !candidate.isTrigger)
+                return candidate;
+        }
+
+        return null;
+    }
+
+    private bool IsGroundedByCollider()
+    {
+        if (bodyCollider == null)
+            return false;
+
+        Bounds bounds = bodyCollider.bounds;
+        if (bounds.size.sqrMagnitude <= 0f)
+            return false;
+
+        float widthMultiplier = Mathf.Clamp(groundCheckWidthMultiplier, 0.1f, 1f);
+        float probeDepth = Mathf.Max(0.01f, groundCheckDepth);
+        Vector2 probeSize = new Vector2(bounds.size.x * widthMultiplier, probeDepth);
+        Vector2 probeCenter = new Vector2(bounds.center.x, bounds.min.y - (probeDepth * 0.5f));
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(probeCenter, probeSize, 0f, groundLayers);
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null || hit == bodyCollider || hit.transform == transform || hit.isTrigger)
+                continue;
+
+            if (hit.attachedRigidbody != null && hit.attachedRigidbody == rb)
+                continue;
+
+            return true;
+        }
+
+        return false;
     }
 }

@@ -333,6 +333,7 @@ public class ShopButtons : MonoBehaviour
         EnsureMessageUI();
         FindHierarchyWarningUI();
         EnsureSharedSuccessUI();
+        MarkPurchaseButtonsForAudioOverride();
         WireCherryBoostButton();
         WireTeddyBearButton();
         WireVolleyballButton();
@@ -406,6 +407,7 @@ public class ShopButtons : MonoBehaviour
         if (button == null)
             return;
 
+        MarkButtonForAudioOverride(button);
         PrepareNamedClickArea(button, "The OnClickOfCherryGoesHere");
         button.onClick.RemoveListener(BuyCherryBoost);
         button.onClick.AddListener(BuyCherryBoost);
@@ -437,6 +439,7 @@ public class ShopButtons : MonoBehaviour
         if (button == null)
             return;
 
+        MarkButtonForAudioOverride(button);
         PrepareNamedClickArea(button, "The OnClickOfTeddyBearGoesHere");
         button.onClick.RemoveListener(BuyTeddyBear);
         button.onClick.AddListener(BuyTeddyBear);
@@ -468,6 +471,7 @@ public class ShopButtons : MonoBehaviour
         if (button == null)
             return;
 
+        MarkButtonForAudioOverride(button);
         PrepareNamedClickArea(button, "The OnClickOfBeachBallGoesHere");
         button.onClick.RemoveListener(BuyVolleyball);
         button.onClick.AddListener(BuyVolleyball);
@@ -644,6 +648,7 @@ public class ShopButtons : MonoBehaviour
         string itemText = "You bought a " + itemDisplayName + "!";
         ClearNotEnoughGoldCoinsWarning();
         EnsureSharedSuccessUI();
+        PlayPurchaseSuccessSfx();
         if (sharedSuccessPanel != null && sharedSuccessText != null)
         {
             if (successRoutine != null)
@@ -676,6 +681,7 @@ public class ShopButtons : MonoBehaviour
     private void ShowNotEnoughApples()
     {
         FindHierarchyWarningUI();
+        PlayPurchaseFailedSfx();
         if (hierarchyWarningPanel != null && hierarchyWarningText != null)
         {
             if (warningShowRoutine != null)
@@ -1197,6 +1203,70 @@ public class ShopButtons : MonoBehaviour
         string until = DateTime.UtcNow.AddMinutes(Mathf.Max(0.1f, minutes)).ToString("O");
         PlayerPrefs.SetString(key, until);
         PlayerPrefs.Save();
+    }
+
+    private void PlayPurchaseSuccessSfx()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayPurchaseSuccessSfx();
+    }
+
+    private void PlayPurchaseFailedSfx()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayPurchaseFailedSfx();
+    }
+
+    private void MarkPurchaseButtonsForAudioOverride()
+    {
+        Button[] buttons = UnityEngine.Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+            if (button == null)
+                continue;
+
+            if (CallsThisPurchaseMethod(button))
+                MarkButtonForAudioOverride(button);
+        }
+    }
+
+    private bool CallsThisPurchaseMethod(Button button)
+    {
+        if (button == null)
+            return false;
+
+        for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+        {
+            UnityEngine.Object target = button.onClick.GetPersistentTarget(i);
+            string methodName = button.onClick.GetPersistentMethodName(i);
+            if (target != this || string.IsNullOrWhiteSpace(methodName))
+                continue;
+
+            if (methodName == nameof(BuyHealthPotion) ||
+                methodName == nameof(BuyEnergyPotion) ||
+                methodName == nameof(BuySmallFood) ||
+                methodName == nameof(BuyBigFood) ||
+                methodName == nameof(BuyJumpBoost) ||
+                methodName == nameof(BuySpeedBoost) ||
+                methodName == nameof(BuyCherryBoost) ||
+                methodName == nameof(BuyTeddyBear) ||
+                methodName == nameof(BuyVolleyball))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void MarkButtonForAudioOverride(Button button)
+    {
+        if (button == null)
+            return;
+
+        if (button.GetComponent<ShopButtonSfxOverride>() == null)
+            button.gameObject.AddComponent<ShopButtonSfxOverride>();
     }
 }
 

@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class AudioManager : MonoBehaviour
 {
@@ -15,6 +17,12 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private float musicFadeDurationMin = 1.5f;
     [SerializeField] private float musicFadeDurationMax = 1.9f;
 
+    [Header("----- SFX Variation -----")]
+    [SerializeField] private bool enableButtonClickVolumeVariation = true;
+    [SerializeField] private bool enableJumpVolumeVariation = true;
+    [Range(0.5f, 1f)] [SerializeField] private float buttonClickMinVolumeMultiplier = 0.8f;
+    [Range(0.5f, 1f)] [SerializeField] private float jumpMinVolumeMultiplier = 0.8f;
+
     [Header("----- Audio Clip -----")]
     public AudioClip background;
     public AudioClip death;
@@ -23,6 +31,9 @@ public class AudioManager : MonoBehaviour
     public AudioClip footsteps;
     public AudioClip endpoint;
     public AudioClip foodcollect;
+    public AudioClip buttonClick;
+    public AudioClip purchaseSuccess;
+    public AudioClip purchaseFailed;
 
     private Coroutine musicFadeRoutine;
 
@@ -37,18 +48,46 @@ public class AudioManager : MonoBehaviour
                 Instance.PlayMusic(background, false, Instance.GetRandomFadeDuration());
             }
 
+            if (buttonClick != null && Instance.buttonClick == null)
+            {
+                Instance.buttonClick = buttonClick;
+            }
+
+            if (jump != null && Instance.jump == null)
+            {
+                Instance.jump = jump;
+            }
+
+            if (purchaseSuccess != null && Instance.purchaseSuccess == null)
+            {
+                Instance.purchaseSuccess = purchaseSuccess;
+            }
+
+            if (purchaseFailed != null && Instance.purchaseFailed == null)
+            {
+                Instance.purchaseFailed = purchaseFailed;
+            }
+
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
     private void Start()
     {
         PlayMusic(background, true);
         ApplySavedAudioState();
+        RegisterButtonClickHooks();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
     public void PlayMusic(AudioClip clip, bool instant = false, float fadeDurationOverride = -1f)
@@ -149,6 +188,39 @@ public class AudioManager : MonoBehaviour
         SFXSource.PlayOneShot(clip);
     }
 
+    public void PlayButtonClickSfx()
+    {
+        if (buttonClick == null)
+            return;
+
+        PlaySFXWithRandomizedVolume(buttonClick, enableButtonClickVolumeVariation ? buttonClickMinVolumeMultiplier : 1f);
+    }
+
+    public void PlayJumpSfx()
+    {
+        if (jump == null)
+            return;
+
+        PlaySFXWithRandomizedVolume(jump, enableJumpVolumeVariation ? jumpMinVolumeMultiplier : 1f);
+    }
+
+    public void PlayPurchaseSuccessSfx()
+    {
+        if (purchaseSuccess == null)
+            return;
+
+        PlaySFX(purchaseSuccess);
+    }
+
+    public void PlayPurchaseFailedSfx()
+    {
+        if (purchaseFailed == null)
+            return;
+
+        PlaySFX(purchaseFailed);
+    }
+
+
     public bool IsMusicMuted => musicSource != null && musicSource.mute;
     public bool IsMusicPaused => musicSource != null && !musicSource.isPlaying && musicSource.clip != null;
     public bool IsSfxMuted => SFXSource != null && SFXSource.mute;
@@ -216,5 +288,39 @@ public class AudioManager : MonoBehaviour
     private bool IsMusicPauseRequested()
     {
         return PlayerPrefs.GetInt(MusicMutedKey, 0) == 1;
+    }
+
+    private void PlaySFXWithRandomizedVolume(AudioClip clip, float minVolumeMultiplier)
+    {
+        if (clip == null || SFXSource == null)
+            return;
+
+        float minMultiplier = Mathf.Clamp(minVolumeMultiplier, 0.5f, 1f);
+        float randomizedVolume = Random.Range(minMultiplier, 1f);
+        float originalVolume = SFXSource.volume;
+        SFXSource.PlayOneShot(clip, randomizedVolume);
+        SFXSource.volume = originalVolume;
+    }
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        RegisterButtonClickHooks();
+    }
+
+    private void RegisterButtonClickHooks()
+    {
+        Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+            if (button == null || !button.gameObject.scene.IsValid() || !button.gameObject.scene.isLoaded)
+                continue;
+
+            ButtonClickSfxHook hook = button.GetComponent<ButtonClickSfxHook>();
+            if (hook == null)
+                hook = button.gameObject.AddComponent<ButtonClickSfxHook>();
+
+            hook.Initialize(button);
+        }
     }
 }

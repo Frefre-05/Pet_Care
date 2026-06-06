@@ -1180,7 +1180,7 @@ public class GamesChatBot : MonoBehaviour
         if (q.Contains("low") || q.Contains("should buy") || q.Contains("instead")) return BuildNeedRecommendation();
         if (!IsGameRelatedQuestion(query))
             return "I can still help analyze this. If you want game-specific advice, include your scene, bars, and what happened.";
-        return BuildNeedRecommendation();
+        return "Ask me something specific about your bars, shop items, levels, report, chores, or what stat to raise next.";
     }
 
     string BuildBoughtSummary()
@@ -1655,16 +1655,25 @@ public class GamesChatBot : MonoBehaviour
     {
         string q = (userInput ?? string.Empty).ToLowerInvariant();
         return q.Contains("what should i do") ||
+               q.Contains("what should i raise") ||
+               q.Contains("what to raise next") ||
+               q.Contains("which stat") ||
+               q.Contains("which bar") ||
+               q.Contains("focus on first") ||
+               q.Contains("fix first") ||
                q.Contains("what should i buy") ||
                q.Contains("recommend") ||
                q.Contains("advice") ||
                q.Contains("priority") ||
-               q.Contains("hungry") ||
-               q.Contains("hunger") ||
-               q.Contains("energy") ||
-               q.Contains("health") ||
-               q.Contains("hygiene") ||
-               q.Contains("happiness") ||
+               q.Contains("prioritize") ||
+               q.Contains("prioritise") ||
+               q.Contains("should i raise") ||
+               q.Contains("what next for my pet") ||
+               q.Contains("energy is low") ||
+               q.Contains("health is low") ||
+               q.Contains("hunger is low") ||
+               q.Contains("hygiene is low") ||
+               q.Contains("happiness is low") ||
                q.Contains("save apples") ||
                q.Contains("save gold coins") ||
                q.Contains("levels blocked") ||
@@ -2080,6 +2089,9 @@ public class GamesChatBot : MonoBehaviour
         if (TryBuildCurrentNeedStatusReply(q, out reply))
             return true;
 
+        if (TryBuildNeedPriorityReply(q, out reply))
+            return true;
+
         if (IsReportQuery(q))
         {
             reply = BuildPixelCareReportAnswer();
@@ -2430,6 +2442,119 @@ public class GamesChatBot : MonoBehaviour
             reply = "Your pet's Happiness is at " + FormatNeedPercent(petNeeds.Happiness) + ".";
 
         return !string.IsNullOrWhiteSpace(reply);
+    }
+
+    bool TryBuildNeedPriorityReply(string q, out string reply)
+    {
+        reply = null;
+        if (string.IsNullOrWhiteSpace(q))
+            return false;
+
+        bool asksPriorityNeed =
+            q.Contains("what to raise next") ||
+            q.Contains("what should i raise") ||
+            q.Contains("what should i focus on") ||
+            q.Contains("what should i fix first") ||
+            q.Contains("which stat should i raise") ||
+            q.Contains("which bar should i raise") ||
+            q.Contains("which stat is most important") ||
+            q.Contains("what needs to go up next") ||
+            ((q.Contains("priority") || q.Contains("prioritize") || q.Contains("prioritise")) &&
+             (q.Contains("health") || q.Contains("hunger") || q.Contains("energy") || q.Contains("hygiene") || q.Contains("happiness") || q.Contains("stat") || q.Contains("bar")));
+
+        if (!asksPriorityNeed)
+            return false;
+
+        RefreshReferences();
+        if (petNeeds == null)
+        {
+            reply = "I cannot check which stat to raise next because the active PetNeeds object is not available.";
+            return true;
+        }
+
+        string needName = GetTopPriorityNeedName(out float currentValue, out string reason);
+        if (string.IsNullOrWhiteSpace(needName))
+        {
+            reply = "Your bars look stable right now. Focus on progression or save Gold Coins for the next urgent need.";
+            return true;
+        }
+
+        reply = needName + " should be raised next because it is at " + FormatNeedPercent(currentValue) + ". " + reason;
+        return true;
+    }
+
+    string GetTopPriorityNeedName(out float value, out string reason)
+    {
+        value = 100f;
+        reason = "It is your most urgent bar right now.";
+        if (petNeeds == null)
+            return null;
+
+        float health = Mathf.Clamp(petNeeds.Health, 0f, 100f);
+        float hunger = Mathf.Clamp(petNeeds.Hunger, 0f, 100f);
+        float energy = Mathf.Clamp(petNeeds.Energy, 0f, 100f);
+        float hygiene = Mathf.Clamp(petNeeds.Hygiene, 0f, 100f);
+        float happiness = Mathf.Clamp(petNeeds.Happiness, 0f, 100f);
+
+        float healthLow = pixieDecisionConfig != null ? pixieDecisionConfig.HealthLowThreshold : PixieDecisionConfig.DefaultHealthLowThreshold;
+        float hungerCritical = pixieDecisionConfig != null ? pixieDecisionConfig.HungerCriticalThreshold : PixieDecisionConfig.DefaultHungerCriticalThreshold;
+        float hungerLow = pixieDecisionConfig != null ? pixieDecisionConfig.HungerLowThreshold : PixieDecisionConfig.DefaultHungerLowThreshold;
+        float energyCritical = pixieDecisionConfig != null ? pixieDecisionConfig.EnergyCriticalThreshold : PixieDecisionConfig.DefaultEnergyCriticalThreshold;
+        float energyLow = pixieDecisionConfig != null ? pixieDecisionConfig.EnergyLowThreshold : PixieDecisionConfig.DefaultEnergyLowThreshold;
+        float energyGate = pixieDecisionConfig != null ? pixieDecisionConfig.EnergyGateThreshold : PixieDecisionConfig.DefaultEnergyGateThreshold;
+        float hygieneLow = pixieDecisionConfig != null ? pixieDecisionConfig.HygieneLowThreshold : PixieDecisionConfig.DefaultHygieneLowThreshold;
+        float happinessLow = pixieDecisionConfig != null ? pixieDecisionConfig.HappinessLowThreshold : PixieDecisionConfig.DefaultHappinessLowThreshold;
+
+        if (health <= healthLow)
+        {
+            value = health;
+            reason = "Low Health is the most dangerous because it puts your pet closest to failing.";
+            return "Health";
+        }
+
+        if (hunger <= hungerCritical)
+        {
+            value = hunger;
+            reason = "Critical Hunger can snowball into slower movement and more Health pressure.";
+            return "Hunger";
+        }
+
+        if (hunger <= hungerLow)
+        {
+            value = hunger;
+            reason = "Hunger is lower than it should be, so stabilize food before less urgent bars.";
+            return "Hunger";
+        }
+
+        if (energy <= energyCritical && energy < hunger)
+        {
+            value = energy;
+            reason = "Energy is critically low, so sleep or recover it before taking on more level pressure.";
+            return "Energy";
+        }
+
+        if (energy < energyGate && energy <= energyLow)
+        {
+            value = energy;
+            reason = "Energy is low enough to block levels under 50%, so bring it back up soon.";
+            return "Energy";
+        }
+
+        if (hygiene <= hygieneLow)
+        {
+            value = hygiene;
+            reason = "Hygiene is your weakest remaining bar and can be fixed for free with a bath.";
+            return "Hygiene";
+        }
+
+        if (happiness <= happinessLow)
+        {
+            value = happiness;
+            reason = "Happiness is the weakest remaining bar right now.";
+            return "Happiness";
+        }
+
+        return null;
     }
 
     int CountMentionedNeeds(string q)

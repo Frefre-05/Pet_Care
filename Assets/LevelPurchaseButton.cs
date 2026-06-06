@@ -58,7 +58,7 @@ public class LevelPurchaseButton : MonoBehaviour
         {
             if (warningText)
             {
-                warningText.text = $"Need {cost} Gold Coins";
+                warningText.text = $"Need {cost} apples";
                 CancelInvoke(nameof(ClearWarning));
                 Invoke(nameof(ClearWarning), warningSeconds);
             }
@@ -149,7 +149,7 @@ public class LevelPurchaseButton : MonoBehaviour
                 targetName = System.IO.Path.GetFileNameWithoutExtension(path);
         }
 
-        string s = (targetName ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "");
+                string s = (targetName ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "");
         if (s.Contains("tutorial")) return 0;
         if (s.Contains("level1")) return 1;
         if (s.Contains("level2")) return 2;

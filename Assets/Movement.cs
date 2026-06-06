@@ -13,7 +13,6 @@ public class PlayerMovement : MonoBehaviour
     [Range(0f, 100f)] [SerializeField] private float lowHungerThreshold = 35f;
     [Range(0f, 100f)] [SerializeField] private float emptyHungerThreshold = 5f;
     [Range(0.2f, 1f)] [SerializeField] private float minSpeedMultiplierAtZeroHunger = 0.6f;
-
     private Rigidbody2D rb;
     private SpriteRenderer sr;
     private Animator anim;
