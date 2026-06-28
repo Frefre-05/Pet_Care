@@ -1123,7 +1123,7 @@ RectTransform:
   m_Father: {fileID: 887143269}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2666,7 +2666,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '= Volley Ball, 1 minute of less happiness loss, +5 happiness
+  m_text: '= Volleyball, 1 minute of less happiness loss, +5 happiness
 
 '
   m_isRightToLeft: 0
@@ -3866,7 +3866,7 @@ RectTransform:
   m_Father: {fileID: 474015653}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -3992,7 +3992,7 @@ RectTransform:
   m_Father: {fileID: 141787757}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -7885,7 +7885,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 72.000145, y: 420.00006}
+  m_AnchoredPosition: {x: 72.000145, y: 376.00006}
   m_SizeDelta: {x: 147.4171, y: 46.3315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &856435649
@@ -8495,7 +8495,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 72.000145, y: 447.00012}
+  m_AnchoredPosition: {x: 72.000145, y: 403.00012}
   m_SizeDelta: {x: 147.4171, y: 46.3315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1006546353
@@ -9694,7 +9694,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 72.000145, y: 474}
+  m_AnchoredPosition: {x: 72.000145, y: 430}
   m_SizeDelta: {x: 147.4171, y: 46.3315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1233354849
@@ -10570,7 +10570,7 @@ RectTransform:
   m_Father: {fileID: 1695162285}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -11621,7 +11621,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 72.000145, y: 497.00012}
+  m_AnchoredPosition: {x: 72.000145, y: 453.00012}
   m_SizeDelta: {x: 147.4171, y: 46.3315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1527451931
@@ -12088,7 +12088,7 @@ RectTransform:
   m_Father: {fileID: 1143787646}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -13376,10 +13376,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2002292334}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 275}
-  m_SizeDelta: {x: 811.5793, y: 225.5124}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -286}
+  m_SizeDelta: {x: 811.57935, y: 225.51239}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1712146331
 MonoBehaviour:
@@ -13401,8 +13401,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Welcome to the Magical Potion shop. Please choose the item you would like
-    to buy.
+  m_text: "Welcome to the Magical Potion shop. \nPlease choose the item you would
+    like to buy."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -13436,7 +13436,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -13756,7 +13756,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 72.000145, y: 523.00006}
+  m_AnchoredPosition: {x: 72.000145, y: 479}
   m_SizeDelta: {x: 147.4171, y: 46.3315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1856652281
@@ -13973,7 +13973,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 960, y: -80}
+  m_AnchoredPosition: {x: 960, y: -121}
   m_SizeDelta: {x: 700, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1948701870
@@ -15148,6 +15148,10 @@ MonoBehaviour:
   SFXSource: {fileID: 603944188}
   musicFadeDurationMin: 1.5
   musicFadeDurationMax: 1.9
+  enableButtonClickVolumeVariation: 1
+  enableJumpVolumeVariation: 1
+  buttonClickMinVolumeMultiplier: 0.8
+  jumpMinVolumeMultiplier: 0.8
   background: {fileID: 8300000, guid: 0ad591428b0c18c4da51fe3bf98dbc63, type: 3}
   death: {fileID: 8300000, guid: 5fdb13d3756c84fecac96f5a2d124370, type: 3}
   checkpoint: {fileID: 8300000, guid: 7478151cf36724a7dada558f746c3633, type: 3}

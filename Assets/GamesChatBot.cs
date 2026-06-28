@@ -191,19 +191,19 @@ public class GamesChatBot : MonoBehaviour
     [SerializeField] bool enableFirstHouseIntroPopup = true;
     [SerializeField] bool pauseGameDuringHouseIntro = true;
     [SerializeField] bool keepHouseIntroCentered = true;
-    [SerializeField] Rect houseIntroWindowRect = new Rect(0f, 0f, 760f, 390f);
-    [SerializeField] float introWindowWidthPercent = 0.5f;
-    [SerializeField] float introWindowHeightPercent = 0.4f;
-    [SerializeField] float introWindowMinWidth = 620f;
-    [SerializeField] float introWindowMinHeight = 320f;
-    [SerializeField] float introWindowMaxWidth = 980f;
-    [SerializeField] float introWindowMaxHeight = 520f;
+    [SerializeField] Rect houseIntroWindowRect = new Rect(0f, 0f, 820f, 500f);
+    [SerializeField] float introWindowWidthPercent = 0.58f;
+    [SerializeField] float introWindowHeightPercent = 0.58f;
+    [SerializeField] float introWindowMinWidth = 700f;
+    [SerializeField] float introWindowMinHeight = 420f;
+    [SerializeField] float introWindowMaxWidth = 1100f;
+    [SerializeField] float introWindowMaxHeight = 720f;
     [SerializeField] float introTypingCharsPerSecond = 22f;
     [SerializeField] int houseIntroFontSize = 26;
     [TextArea(4, 8)] [SerializeField] string houseIntroParagraph =
-        "Welcome to your House. This is your safe place to take care of your pet: the bed restores Energy, the bath restores Hygiene, and your Levels menu in the top-right includes Pet Care where you buy important items like Kiwi, Pineapple, and Health Potion. If your Energy is below 50%, levels stay locked until you rest. Keep an eye on your bars because low Hunger can slow you down and make Health drop faster. Open your Pixie AI chatbot with G, and close it with Escape. Thank you, and enjoy playing.";
+        "House Tutorial\n\nWelcome Home {PET_NAME}!\n\nThis is your pet's safe place to rest and recover.\n\n• Bed restores Energy\n• Bath restores Hygiene\n• Open the Levels Menu (top-right) and select Pet Care to buy items like Kiwi, Pineapple, and Health Potions.\n\nIf your Energy drops below 50%, levels will remain locked until you rest.\n\nKeep an eye on your stats:\n• Low Hunger slows you down.\n• Low Hunger also causes Health to decrease faster.\n\nPress G to open Pixie AI and Esc to close it.\n\nThank you for playing and enjoy your adventure!";
     [TextArea(4, 12)] [SerializeField] string tutorialIntroParagraph =
-        "Pixie AI: Hi, welcome to Pixel Care!\nRules and more:\nYou move with A & D or with the 2 arrow keys for left \nand right.\nYou jump with the spacebar and can double jump \nif you click it twice fast. Gold Coins are our form of currency, and 1 Gold Coin = $1. You can use them to buy food and medicine as they are rare and can only be obtained from completing difficult levels. Enjoy!";
+        "Hello! I'm Pixie AI, and I'll help you, {PLAYER_NAME}, get started on your adventure in Pixel Care!\n\n🎮Controls:\n\nPress A to move left and D to move right.\nYou can also use the Left Arrow (←) and Right Arrow (→) keys.\nPress the Spacebar to jump.\nWant to reach higher places? Press the Spacebar twice quickly to perform a Double Jump!\n\nGold Coins are the main currency in Pixel Care.\n\n1 Gold Coin = $1\nUse Gold Coins to purchase:\n🍎 Food\n💊 Medicine\nOther helpful supplies\n\nGold Coins are rare and valuable. The best way to earn them is by completing challenging levels and overcoming difficult obstacles throughout the game.";
 
     [Header("Gameplay")]
     [SerializeField] bool persistConversationAcrossSessions = true;
@@ -255,6 +255,7 @@ public class GamesChatBot : MonoBehaviour
     int lastScreenHeight;
     int introVisibleChars;
     float introTypingProgress;
+    Vector2 introScrollPosition;
     string petPickedUtcIso = string.Empty;
     string activeIntroParagraph = string.Empty;
     string latestAdvisorStatus = "Advice unavailable.";
@@ -938,7 +939,11 @@ public class GamesChatBot : MonoBehaviour
             GUILayout.Space(8f);
             string intro = activeIntroParagraph ?? string.Empty;
             int count = Mathf.Clamp(introVisibleChars, 0, intro.Length);
+            float introButtonAreaHeight = 54f;
+            float introScrollHeight = Mathf.Max(120f, windowRect.height - introButtonAreaHeight - 46f);
+            introScrollPosition = GUILayout.BeginScrollView(introScrollPosition, false, true, GUILayout.Height(introScrollHeight));
             GUILayout.Label(intro.Substring(0, count), introParagraphStyle);
+            GUILayout.EndScrollView();
             GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -1737,7 +1742,8 @@ public class GamesChatBot : MonoBehaviour
         isOpen = true;
         introVisibleChars = 0;
         introTypingProgress = 0f;
-        activeIntroParagraph = introText;
+        introScrollPosition = Vector2.zero;
+        activeIntroParagraph = PersonalizeIntroText(introText);
         houseIntroWindowRect = BuildIntroWindowRect();
         PlayerPrefs.SetInt(introKey, 1);
         PlayerPrefs.Save();
@@ -1747,6 +1753,20 @@ public class GamesChatBot : MonoBehaviour
             preIntroTimeScale = Time.timeScale;
             Time.timeScale = 0f;
         }
+    }
+
+    string PersonalizeIntroText(string introText)
+    {
+        if (string.IsNullOrWhiteSpace(introText))
+            return introText;
+
+        string playerName = GetStoredPlayerName();
+        if (string.IsNullOrWhiteSpace(playerName))
+            playerName = "player";
+
+        return introText
+            .Replace("{PLAYER_NAME}", playerName)
+            .Replace("{PET_NAME}", playerName);
     }
 
     string BuildChoreResponse()
@@ -2313,15 +2333,27 @@ public class GamesChatBot : MonoBehaviour
         bool asksBoostInfo =
             (q.Contains("what does jump boost do") || q.Contains("what does speed boost do") ||
              q.Contains("what does cherry do") || q.Contains("what does cherry boost do") ||
+             q.Contains("what does teddy do") || q.Contains("what does teddy bear do") ||
              q.Contains("what does volleyball do") || q.Contains("what does volley ball do") || q.Contains("what does beach ball do") ||
              q.Contains("how much does jump boost") || q.Contains("how much does speed boost") ||
+             q.Contains("how much does teddy") || q.Contains("how much is teddy") || q.Contains("how much is teddy bear") ||
              q.Contains("how much does volleyball") || q.Contains("how much is volleyball") ||
              q.Contains("how much does cherry") || q.Contains("how much is cherry") ||
+             q.Contains("how long does teddy") || q.Contains("how long does teddy bear") ||
              q.Contains("how long does jump boost") || q.Contains("how long does speed boost") ||
              q.Contains("how long does volleyball") || q.Contains("how long does volley ball") ||
              q.Contains("how long does cherry") || q.Contains("how long does cherry boost"));
         if (asksBoostInfo)
         {
+            if (q.Contains("teddy"))
+            {
+                float happiness = shopButtons != null ? shopButtons.teddyBearHappinessRestore : 50f;
+                reply =
+                    "Teddy Bear costs " + GetItemCostById(GamesChatBotItemId.TeddyBear) + " Gold Coins and restores " +
+                    Mathf.RoundToInt(happiness) + " Happiness.";
+                return true;
+            }
+
             if (q.Contains("volleyball") || q.Contains("volley ball") || q.Contains("beach ball"))
             {
                 float duration = shopButtons != null ? shopButtons.volleyballHappinessDecaySlowDurationMinutes : 1f;
@@ -2348,6 +2380,7 @@ public class GamesChatBot : MonoBehaviour
                 "Jump Boost costs " + GetItemCostById(GamesChatBotItemId.JumpBoost) + " Gold Coins and increases jump height. " +
                 "Speed Boost costs " + GetItemCostById(GamesChatBotItemId.SpeedBoost) + " Gold Coins and increases movement speed. " +
                 "Their shop duration is currently set to about " + Mathf.RoundToInt(shopButtons != null ? shopButtons.boostDurationMinutes : 10f) + " minutes. " +
+                "Teddy Bear costs " + GetItemCostById(GamesChatBotItemId.TeddyBear) + " Gold Coins and restores " + Mathf.RoundToInt(shopButtons != null ? shopButtons.teddyBearHappinessRestore : 50f) + " Happiness. " +
                 "Cherry costs " + GetItemCostById(GamesChatBotItemId.CherryBoost) + " Gold Coins, restores 10 Hunger, and slows all stat decay by 10% for about 5 minutes.";
             return true;
         }
@@ -3213,6 +3246,3 @@ public static class GamesChatBotBootstrap
         new GameObject("GamesChatBotUIManager").AddComponent<GamesChatBot>();
     }
 }
-
-
-

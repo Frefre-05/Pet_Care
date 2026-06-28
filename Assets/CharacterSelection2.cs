@@ -20,8 +20,12 @@ public class CharacterSelection2 : MonoBehaviour
     [Header("Play / Name UI")]
     public Button playButton; // Disabled until name + selection
     public TMP_InputField nameInput; // TMP input for player name
+    public TMP_Text validationMessageLabel;
     [Tooltip("Minimum characters required for a valid player name")]
-    public int minNameLength = 1;
+    public int minNameLength = 3;
+    [SerializeField] private string shortNameMessage = "Name must be at least 3 characters.";
+    [SerializeField] private string noPetSelectedMessage = "Select a pet first.";
+    [SerializeField] private float validationMessageDuration = 2.5f;
 
     [Header("Highlight (no extra images needed)")]
     public Color normalColor = Color.white;
@@ -41,6 +45,14 @@ public class CharacterSelection2 : MonoBehaviour
     private const string PREF_SELECTED = "SelectedCharacter";
     private const string PREF_PLAYERNAME = "PlayerName";
     private const string PREF_TUTORIAL_COMPLETED = "TutorialCompleted";
+    private const int HardMinimumNameLength = 3;
+    private Coroutine validationMessageRoutine;
+
+    void OnValidate()
+    {
+        if (minNameLength < HardMinimumNameLength)
+            minNameLength = HardMinimumNameLength;
+    }
 
     void Awake()
     {
@@ -63,6 +75,15 @@ public class CharacterSelection2 : MonoBehaviour
         if (nameInput)
             nameInput.onValueChanged.AddListener(OnNameChanged);
 
+        if (playButton != null)
+        {
+            playButton.onClick.RemoveAllListeners();
+            playButton.onClick.AddListener(Play);
+        }
+
+        DecoratePlayButton();
+        EnsureValidationMessageLabel();
+        HideValidationMessageImmediate();
         ApplyVisualsImmediate();
         RefreshPlayInteractivity();
         SaveProfileToDisk(selectedCharacter, GetEffectivePlayerName());
@@ -93,7 +114,49 @@ public class CharacterSelection2 : MonoBehaviour
     {
         int effectiveSelected = selectedCharacter >= 0 ? selectedCharacter : PlayerPrefs.GetInt(PREF_SELECTED, -1);
         string effectiveName = GetEffectivePlayerName();
-        if (string.IsNullOrEmpty(effectiveName) || effectiveSelected < 0) return;
+
+        if (effectiveSelected < 0 || string.IsNullOrEmpty(effectiveName) || effectiveName.Length < Mathf.Max(HardMinimumNameLength, minNameLength))
+        {
+            string path = GetProfilePath();
+            if (File.Exists(path))
+            {
+                try
+                {
+                    string json = File.ReadAllText(path);
+                    if (!string.IsNullOrWhiteSpace(json))
+                    {
+                        PlayerProfileData data = JsonUtility.FromJson<PlayerProfileData>(json);
+                        if (data != null)
+                        {
+                            if (effectiveSelected < 0 && data.selectedCharacter >= 0)
+                                effectiveSelected = data.selectedCharacter;
+
+                            if ((string.IsNullOrEmpty(effectiveName) || effectiveName.Length < Mathf.Max(HardMinimumNameLength, minNameLength)) &&
+                                !string.IsNullOrWhiteSpace(data.playerName))
+                            {
+                                effectiveName = data.playerName.Trim();
+                            }
+                        }
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning("[CharacterSelection2] Could not recover profile backup during Play: " + ex.Message);
+                }
+            }
+        }
+
+        if (effectiveSelected < 0)
+        {
+            ShowValidationMessage(noPetSelectedMessage);
+            return;
+        }
+
+        if (!IsTypedNameValid())
+        {
+            ShowValidationMessage(shortNameMessage);
+            return;
+        }
 
         PlayerPrefs.SetString(PREF_PLAYERNAME, effectiveName);
         PlayerPrefs.SetInt(PREF_SELECTED, effectiveSelected);
@@ -111,16 +174,45 @@ public class CharacterSelection2 : MonoBehaviour
             SceneTransitionLoader.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
+    public bool CanStartGameFromSelection()
+    {
+        int effectiveSelected = selectedCharacter >= 0 ? selectedCharacter : PlayerPrefs.GetInt(PREF_SELECTED, -1);
+        if (effectiveSelected < 0)
+        {
+            ShowValidationMessage(noPetSelectedMessage);
+            return false;
+        }
+
+        if (!IsTypedNameValid())
+        {
+            ShowValidationMessage(shortNameMessage);
+            return false;
+        }
+
+        return true;
+    }
+
     // ---------- Helpers ----------
     bool IsNameValid()
     {
         string n = GetEffectivePlayerName();
-        return !string.IsNullOrEmpty(n) && n.Length >= minNameLength;
+        return !string.IsNullOrEmpty(n) && n.Length >= Mathf.Max(HardMinimumNameLength, minNameLength);
+    }
+
+    bool IsTypedNameValid()
+    {
+        string n = GetTypedPlayerName();
+        return !string.IsNullOrEmpty(n) && n.Length >= Mathf.Max(HardMinimumNameLength, minNameLength);
+    }
+
+    string GetTypedPlayerName()
+    {
+        return nameInput ? nameInput.text.Trim() : string.Empty;
     }
 
     string GetEffectivePlayerName()
     {
-        string typed = nameInput ? nameInput.text.Trim() : string.Empty;
+        string typed = GetTypedPlayerName();
         if (!string.IsNullOrEmpty(typed)) return typed;
         return PlayerPrefs.GetString(PREF_PLAYERNAME, "").Trim();
     }
@@ -183,14 +275,12 @@ public class CharacterSelection2 : MonoBehaviour
 
     void RefreshPlayInteractivity()
     {
-        int effectiveSelected = selectedCharacter >= 0 ? selectedCharacter : PlayerPrefs.GetInt(PREF_SELECTED, -1);
-        bool canPlay = (effectiveSelected >= 0) && IsNameValid();
-        if (playButton) playButton.interactable = canPlay;
+        if (playButton) playButton.interactable = true;
     }
 
     void OnNameChanged(string _)
     {
-        string typed = GetEffectivePlayerName();
+        string typed = GetTypedPlayerName();
         if (!string.IsNullOrEmpty(typed))
         {
             PlayerPrefs.SetString(PREF_PLAYERNAME, typed);
@@ -198,7 +288,100 @@ public class CharacterSelection2 : MonoBehaviour
             SaveProfileToDisk(selectedCharacter, typed);
         }
 
+        if (IsTypedNameValid())
+            HideValidationMessageImmediate();
+
         RefreshPlayInteractivity();
+    }
+
+    void DecoratePlayButton()
+    {
+        if (playButton == null)
+            return;
+    }
+
+    void EnsureValidationMessageLabel()
+    {
+        if (validationMessageLabel != null || nameInput == null)
+            return;
+
+        RectTransform nameRect = nameInput.transform as RectTransform;
+        RectTransform parentRect = nameRect != null ? nameRect.parent as RectTransform : null;
+        if (nameRect == null || parentRect == null)
+            return;
+
+        GameObject panel = new GameObject("ValidationMessagePanel", typeof(RectTransform), typeof(Image));
+        RectTransform panelRect = panel.transform as RectTransform;
+        panelRect.SetParent(parentRect, false);
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 1f);
+        panelRect.sizeDelta = new Vector2(Mathf.Max(500f, nameRect.rect.width + 56f), 88f);
+        panelRect.anchoredPosition = nameRect.anchoredPosition + new Vector2(0f, -(nameRect.rect.height * 0.72f) - 22f);
+
+        Image panelImage = panel.GetComponent<Image>();
+        panelImage.color = new Color32(92, 18, 18, 228);
+
+        GameObject go = new GameObject("ValidationMessage", typeof(RectTransform), typeof(TextMeshProUGUI));
+        RectTransform rt = go.transform as RectTransform;
+        rt.SetParent(panelRect, false);
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.offsetMin = new Vector2(20f, 12f);
+        rt.offsetMax = new Vector2(-20f, -12f);
+
+        TextMeshProUGUI tmp = go.GetComponent<TextMeshProUGUI>();
+        tmp.text = "";
+        tmp.fontSize = 24f;
+        tmp.color = new Color32(255, 232, 232, 255);
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+        tmp.raycastTarget = false;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.characterSpacing = 0.5f;
+        if (nameInput.textComponent != null)
+        {
+            tmp.font = nameInput.textComponent.font;
+            tmp.fontSharedMaterial = nameInput.textComponent.fontSharedMaterial;
+        }
+
+        validationMessageLabel = tmp;
+    }
+
+    void ShowValidationMessage(string message)
+    {
+        EnsureValidationMessageLabel();
+        if (validationMessageLabel == null)
+            return;
+
+        validationMessageLabel.text = "<b>" + message + "</b>";
+        if (validationMessageLabel.transform.parent != null)
+            validationMessageLabel.transform.parent.gameObject.SetActive(true);
+        validationMessageLabel.gameObject.SetActive(true);
+
+        if (validationMessageRoutine != null)
+            StopCoroutine(validationMessageRoutine);
+
+        validationMessageRoutine = StartCoroutine(HideValidationMessageAfterDelay());
+    }
+
+    IEnumerator HideValidationMessageAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.5f, validationMessageDuration));
+        HideValidationMessageImmediate();
+        validationMessageRoutine = null;
+    }
+
+    void HideValidationMessageImmediate()
+    {
+        if (validationMessageLabel == null)
+            return;
+
+        validationMessageLabel.text = "";
+        if (validationMessageLabel.transform.parent != null)
+            validationMessageLabel.transform.parent.gameObject.SetActive(false);
+        validationMessageLabel.gameObject.SetActive(false);
     }
 
     void ApplyVisualsImmediate()

@@ -19,6 +19,10 @@ public class Room : MonoBehaviour
 
     public void PlayGame()
     {
+        CharacterSelection2 selectionScreen = FindAnyObjectByType<CharacterSelection2>();
+        if (selectionScreen != null && !selectionScreen.CanStartGameFromSelection())
+            return;
+
         int selected = PlayerPrefs.GetInt(PrefSelected, -1);
         string playerName = PlayerPrefs.GetString(PrefPlayerName, "").Trim();
 
