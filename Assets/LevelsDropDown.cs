@@ -1,15 +1,23 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+using TMPro;
 
 public class LevelsDropDown : MonoBehaviour
 {
+    public static bool IsMenuOpen { get; private set; }
+
     [Header("Menu Parts")]
     [SerializeField] private GameObject levelsMenu; // the panel that contains all the level buttons
     [SerializeField] private Image dimBackground; // full-screen Image behind the panel (optional)
 
     [Header("Fade / Dim")]
     [SerializeField] private float dimAlpha = 0.5f;
+
+    [Header("Energy Gate (Reversible)")]
+    [SerializeField] private bool requireMinEnergyToPlay = true;
+    [Range(0f, 100f)] [SerializeField] private float minEnergyPercent = 50f;
+    [SerializeField] private TMP_Text warningText;
+    [SerializeField] private float warningSeconds = 1.5f;
 
     [Header("Scene Names (match Build Settings)")]
     [SerializeField] private string sceneTutorial = "Tutorial";
@@ -47,6 +55,11 @@ public class LevelsDropDown : MonoBehaviour
     }
 
     // --- Public API for your OnClick on the green "LEVELS" button ---
+    public static void SetMenuOpenState(bool isOpen)
+    {
+        IsMenuOpen = isOpen;
+    }
+
     public void OpenMenu()
     {
         if (menuCg == null) return;
@@ -62,6 +75,8 @@ public class LevelsDropDown : MonoBehaviour
             dimCg.alpha = dimAlpha;
             dimCg.blocksRaycasts = true;
         }
+
+        SetMenuOpenState(true);
 
         // Time.timeScale = 0f; // pause game
     }
@@ -82,11 +97,13 @@ public class LevelsDropDown : MonoBehaviour
             dimBackground.gameObject.SetActive(false);
         }
 
+        SetMenuOpenState(false);
         Time.timeScale = 1f; // resume game
     }
 
     void HideMenuImmediate()
     {
+        SetMenuOpenState(false);
         if (levelsMenu != null)
         {
             if (!levelsMenu.activeSelf) levelsMenu.SetActive(false);
@@ -121,7 +138,91 @@ public class LevelsDropDown : MonoBehaviour
     public void LoadSceneByName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return;
+
+        if (IsProgressLocked(name))
+        {
+            ShowProgressWarning(name);
+            return;
+        }
+
+        if (IsLevelScene(name) && !HasEnoughEnergy())
+        {
+            ShowEnergyWarning();
+            return;
+        }
+
         Time.timeScale = 1f;
-        SceneManager.LoadScene(name);
+        SceneTransitionLoader.LoadScene(name);
+    }
+
+    private bool IsLevelScene(string sceneName)
+    {
+        string s = sceneName.Trim().ToLowerInvariant();
+        return s.Contains("level");
+    }
+
+    private bool IsProgressLocked(string sceneName)
+    {
+        int required = GetRequiredUnlockedIndex(sceneName);
+        if (required < 0) return false;
+        return !LevelProgress.CanPlay(required);
+    }
+
+    private int GetRequiredUnlockedIndex(string sceneName)
+    {
+        string s = (sceneName ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "");
+        if (s.Contains("tutorial")) return 0;
+        if (s.Contains("level1")) return 1;
+        if (s.Contains("level2")) return 2;
+        if (s.Contains("level3")) return 3;
+        if (s.Contains("level4")) return 4;
+        return -1; // non-level scenes (house/hospital/store/etc)
+    }
+
+    private bool HasEnoughEnergy()
+    {
+        if (!requireMinEnergyToPlay) return true;
+        PetNeeds petNeeds = FindAnyObjectByType<PetNeeds>();
+        if (petNeeds == null) return true;
+        return petNeeds.Energy >= minEnergyPercent;
+    }
+
+    private void ShowEnergyWarning()
+    {
+        if (warningText != null)
+        {
+            warningText.text = $"Need {Mathf.RoundToInt(minEnergyPercent)}% energy";
+            CancelInvoke(nameof(ClearWarning));
+            Invoke(nameof(ClearWarning), warningSeconds);
+        }
+        else
+        {
+            Debug.LogWarning($"Levels locked: need at least {minEnergyPercent}% energy.");
+        }
+    }
+
+    private void ShowProgressWarning(string sceneName)
+    {
+        string msg = $"Locked: finish previous level first ({sceneName})";
+        if (warningText != null)
+        {
+            warningText.text = msg;
+            CancelInvoke(nameof(ClearWarning));
+            Invoke(nameof(ClearWarning), warningSeconds);
+        }
+        else
+        {
+            Debug.LogWarning(msg);
+        }
+    }
+
+    void OnDisable()
+    {
+        SetMenuOpenState(false);
+    }
+
+    private void ClearWarning()
+    {
+        if (warningText != null) warningText.text = string.Empty;
     }
 }

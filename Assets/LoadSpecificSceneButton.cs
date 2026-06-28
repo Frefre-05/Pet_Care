@@ -25,8 +25,8 @@ public class LoadSpecificSceneButton : MonoBehaviour
         if (unpauseBeforeLoad) Time.timeScale = 1f;
 
         if (reference == RefType.ByName && !string.IsNullOrEmpty(sceneName))
-            SceneManager.LoadScene(sceneName);
+            SceneTransitionLoader.LoadScene(sceneName);
         else
-            SceneManager.LoadScene(sceneIndex);
+            SceneTransitionLoader.LoadScene(sceneIndex);
     }
 }

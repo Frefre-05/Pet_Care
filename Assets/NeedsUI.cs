@@ -59,7 +59,7 @@ public class NeedsUI : MonoBehaviour
         var players = GameObject.FindGameObjectsWithTag("Player");
         foreach (var p in players)
         {
-            var n = p.GetComponent<PetNeeds>();
+            var n = p.GetComponentInChildren<PetNeeds>(true);
             if (n != null)
             {
                 needs = n;
@@ -67,13 +67,14 @@ public class NeedsUI : MonoBehaviour
             }
         }
 
-        // 2) Fallback: any PetNeeds in the scene
+        // 2) Fallback: any ACTIVE PetNeeds in the scene
         if (needs == null)
         {
 #if UNITY_6000_9_OR_NEWER
-needs = Object.FindFirstObjectByType<PetNeeds>();
+            var all = Object.FindObjectsByType<PetNeeds>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            if (all != null && all.Length > 0) needs = all[0];
 #else
-            needs = FindObjectOfType<PetNeeds>();
+            needs = FindFirstObjectByType<PetNeeds>();
 #endif
         }
     }
@@ -102,4 +103,5 @@ needs = Object.FindFirstObjectByType<PetNeeds>();
         Debug.LogWarning(m);
         warned = true;
     }
+
 }

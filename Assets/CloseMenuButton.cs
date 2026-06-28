@@ -27,6 +27,7 @@ public class CloseMenuButton : MonoBehaviour
             menuCanvasGroup.blocksRaycasts = false;
         }
 
+        LevelsDropDown.SetMenuOpenState(false);
         Debug.Log("Menu closed successfully!");
     }
 }

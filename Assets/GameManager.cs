@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text appleTMP; // TextMeshPro TMP_Text (recommended)
 
     // --- Apple tracking ---
-    public int AppleCount { get; private set; } = 0;
+    public int AppleCount => AppleCurrency.Get();
 
     // --- PlayerPrefs Keys ---
     private const string APPLE_COUNT_KEY = "APPLE_COUNT";
@@ -25,49 +25,44 @@ public class GameManager : MonoBehaviour
         // PlayerPrefs.DeleteKey(APPLE_COUNT_KEY);
         // PlayerPrefs.DeleteKey(COLLECTED_FRUITS_KEY);
 
-        // Load saved data
-        LoadAppleCount();
         LoadCollectedFruits();
 
         UpdateAppleUI();
+    }
+
+    private void OnEnable()
+    {
+        AppleCurrency.OnChanged += HandleAppleChanged;
+    }
+
+    private void OnDisable()
+    {
+        AppleCurrency.OnChanged -= HandleAppleChanged;
     }
 
     // ==================== APPLE MANAGEMENT ====================
 
     public void AddApple(int amount = 1)
     {
-        AppleCount += amount;
+        AppleCurrency.Add(amount);
         UpdateAppleUI();
-        SaveAppleCount();
     }
 
     public void SetAppleCount(int value)
     {
-        AppleCount = value;
+        AppleCurrency.Set(value);
         UpdateAppleUI();
-        SaveAppleCount();
     }
 
     private void UpdateAppleUI()
     {
         // Show apple count on legacy UI
         if (appleText != null)
-            appleText.text = AppleCount.ToString();
+            appleText.text = AppleCurrency.Get().ToString();
 
         // Show apple count on TextMeshPro UI
         if (appleTMP != null)
-            appleTMP.text = AppleCount.ToString();
-    }
-
-    private void SaveAppleCount()
-    {
-        PlayerPrefs.SetInt(APPLE_COUNT_KEY, AppleCount);
-        PlayerPrefs.Save();
-    }
-
-    private void LoadAppleCount()
-    {
-        AppleCount = PlayerPrefs.GetInt(APPLE_COUNT_KEY, 0);
+            appleTMP.text = AppleCurrency.Get().ToString();
     }
 
     // ==================== FRUIT COLLECTOR MANAGEMENT ====================
@@ -117,8 +112,13 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.DeleteKey(COLLECTED_FRUITS_KEY);
         PlayerPrefs.Save();
         collected.Clear();
-        AppleCount = 0;
+        AppleCurrency.Clear();
         UpdateAppleUI();
         Debug.Log("Apple data reset complete.");
+    }
+
+    private void HandleAppleChanged(int _)
+    {
+        UpdateAppleUI();
     }
 }

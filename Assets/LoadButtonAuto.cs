@@ -23,9 +23,9 @@ public class LoadButtonAuto : MonoBehaviour
         if (unpauseBeforeLoad) Time.timeScale = 1f;
 
         if (useSceneName && !string.IsNullOrEmpty(sceneName))
-            SceneManager.LoadScene(sceneName);
+            SceneTransitionLoader.LoadScene(sceneName);
         else if (!useSceneName && sceneIndex >= 0)
-            SceneManager.LoadScene(sceneIndex);
+            SceneTransitionLoader.LoadScene(sceneIndex);
         else
             Debug.LogWarning($"{name}: No scene set.");
     }

@@ -1,10 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using System.Collections;
 
 public class EndPoint : MonoBehaviour
 {
+    const string TutorialCompletedKey = "TutorialCompleted";
+    const float PetSicknessChanceOnLevelComplete = 0.10f;
+    const float PetSicknessHealthLoss = 25f;
+    static readonly float HappinessRewardOnEndpoint = 0f;
+
     [Header("Progress")]
     [Tooltip("0=Tutorial, 1=Level1, 2=Level2, 3=Level3, 4=Level4")]
     [SerializeField] int thisLevelIndex = 0;
@@ -12,25 +16,15 @@ public class EndPoint : MonoBehaviour
     [Header("Where to go next")]
     [SerializeField] string sceneToLoad = "House";
 
-    [Header("Fade (optional)")]
-    [SerializeField] Image fadeImage; // full-screen black UI Image
-    [SerializeField] float fadeDuration = 0.6f;
-
     [Header("Player filter")]
     [SerializeField] string playerTag = "Player";
-
-    [Header("Apple / Energy System")]
-    [Tooltip("PlayerPrefs key for saved apples/energy count")]
-    [SerializeField] string appleKey = "Apples";
-    [Tooltip("Cost for each level (index = 0=Tutorial, 1=Level1, etc.)")]
-    [SerializeField] int[] levelAppleCosts = { 0, 3, 5, 8, 10 };
 
     bool isTransitioning = false;
 
     // === ADDED: helper to get the ACTIVE PetNeeds (the clone) ===
     private PetNeeds FindActivePetNeeds()
     {
-        var all = FindObjectsOfType<PetNeeds>();
+        var all = Object.FindObjectsByType<PetNeeds>(FindObjectsSortMode.None);
         foreach (var p in all)
         {
             if (p != null && p.isActiveAndEnabled && p.gameObject.activeInHierarchy)
@@ -53,56 +47,94 @@ public class EndPoint : MonoBehaviour
         isTransitioning = true;
 
         // 1) Unlock next level
-        LevelProgress.MarkCompleted(thisLevelIndex);
-
-        // 2) Subtract apples depending on current level
-        int apples = PlayerPrefs.GetInt(appleKey, 0);
-        int cost = 0;
-
-        if (thisLevelIndex >= 0 && thisLevelIndex < levelAppleCosts.Length)
+        int finishedIndex = ResolveFinishedLevelIndex();
+        LevelProgress.MarkCompleted(finishedIndex);
+        if (finishedIndex == 1) GamesChatBotStats.RecordEvent("complete_level_1");
+        else if (finishedIndex == 2) GamesChatBotStats.RecordEvent("complete_level_2");
+        else if (finishedIndex == 3) GamesChatBotStats.RecordEvent("complete_level_3");
+        else if (finishedIndex == 4) GamesChatBotStats.RecordEvent("complete_level_4");
+        if (finishedIndex == 0)
         {
-            cost = levelAppleCosts[thisLevelIndex];
+            PlayerPrefs.SetInt(TutorialCompletedKey, 1);
+            PlayerPrefs.Save();
         }
 
-        apples -= cost;
-        if (apples < 0) apples = 0; // prevent negative apples
-        PlayerPrefs.SetInt(appleKey, apples);
-        PlayerPrefs.Save();
+        // 2) Do not charge Gold Coins here.
+        // Entry buttons/shop already handle spending; charging in EndPoint causes double-deduction.
+        Debug.Log($"Level {finishedIndex} completed. Gold Coins unchanged: {AppleCurrency.Get()}");
 
-        Debug.Log($"Level {thisLevelIndex} completed! Cost: {cost} apples. Remaining apples: {apples}");
-
-        // === ADDED: make the ACTIVE pet happy when teleporting ===
         var pet = FindActivePetNeeds();
         if (pet != null)
         {
-            pet.Happiness = 100f; // set bar to full for the clone
-        }
-        // =========================================================
-
-        // 3) Fade to black (optional)
-        if (fadeImage != null && fadeDuration > 0f)
-        {
-            var c = fadeImage.color;
-            c.a = 0f;
-            fadeImage.color = c;
-            fadeImage.gameObject.SetActive(true);
-
-            float t = 0f;
-            while (t < fadeDuration)
-            {
-                t += Time.unscaledDeltaTime;
-                c.a = Mathf.InverseLerp(0f, fadeDuration, t);
-                fadeImage.color = c;
-                yield return null;
-            }
+            ApplyEndpointHappinessReward(pet);
+            TryApplyLevelCompletionSickness(pet);
         }
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        // 3) Global scene transition handles fade-out/in.
+        yield return new WaitForSecondsRealtime(0.05f);
 
         // 4) Load next scene
         if (!string.IsNullOrEmpty(sceneToLoad))
         {
-            SceneManager.LoadScene(sceneToLoad);
+            // Keep trophy transition at previous slower speed.
+            SceneTransitionLoader.LoadScene(sceneToLoad, 1.7f, 1.7f);
         }
+    }
+
+    private int ResolveFinishedLevelIndex()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        string s = scene == null ? string.Empty : scene.ToLowerInvariant().Replace(" ", "");
+
+        // Robust fallback to scene-name mapping to avoid inspector misconfiguration.
+        if (s.Contains("tutorial")) return 0;
+        if (s.Contains("level1")) return 1;
+        if (s.Contains("level2")) return 2;
+        if (s.Contains("level3")) return 3;
+        if (s.Contains("level4")) return 4;
+
+        return Mathf.Clamp(thisLevelIndex, 0, 4);
+    }
+
+    private void ApplyEndpointHappinessReward(PetNeeds pet)
+    {
+        if (pet == null)
+            return;
+
+        if (HappinessRewardOnEndpoint <= 0f)
+            return;
+
+        pet.Happiness = Mathf.Clamp(pet.Happiness + HappinessRewardOnEndpoint, 0f, 100f);
+    }
+
+    private void TryApplyLevelCompletionSickness(PetNeeds pet)
+    {
+        if (pet == null)
+            return;
+
+        if (IsHospitalScene())
+            return;
+
+        if (Random.value > PetSicknessChanceOnLevelComplete)
+            return;
+
+        pet.ApplySickness();
+        pet.TakeNeedsDamage(PetSicknessHealthLoss);
+
+        string petName = PlayerPrefs.GetString("PlayerName", string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(petName))
+            petName = "Your pet";
+
+        string levelName = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrWhiteSpace(levelName))
+            levelName = "this level";
+
+        GamesChatBot.QueueLevelSicknessWarning(petName, levelName);
+        Debug.Log($"[EndPoint] {petName} got sick after finishing {levelName}, lost {PetSicknessHealthLoss}% health, and now has faster health drain until cured.");
+    }
+
+    private bool IsHospitalScene()
+    {
+        return string.Equals(SceneManager.GetActiveScene().name, "Hospital", System.StringComparison.OrdinalIgnoreCase);
     }
 }

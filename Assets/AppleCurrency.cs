@@ -5,6 +5,7 @@ public static class AppleCurrency
 {
     // PlayerPrefs key
     private const string Key = "APPLE_COUNT";
+    private const string TotalEarnedKey = "PIXEL_CARE_APPLES_EARNED";
 
     // Fired whenever the apple amount changes (after Set / Add / Spend)
     public static event Action<int> OnChanged;
@@ -32,8 +33,19 @@ public static class AppleCurrency
         OnChanged?.Invoke(value); // notify HUD, etc.
     }
 
+    public static int GetTotalEarned() => PlayerPrefs.GetInt(TotalEarnedKey, 0);
+
     // Add apples (can be negative if you really want)
-    public static void Add(int amount) => Set(Get() + amount);
+    public static void Add(int amount)
+    {
+        if (amount > 0)
+        {
+            PlayerPrefs.SetInt(TotalEarnedKey, GetTotalEarned() + amount);
+            PlayerPrefs.Save();
+        }
+
+        Set(Get() + amount);
+    }
 
     // Check if player has enough
     public static bool Has(int amount) => Get() >= amount;
@@ -51,15 +63,19 @@ public static class AppleCurrency
     }
 
     // Reset to 0 (you can call this from a reset-save button)
-    public static void Clear() => Set(0);
+    public static void Clear()
+    {
+        PlayerPrefs.DeleteKey(TotalEarnedKey);
+        Set(0);
+    }
 
 #if UNITY_EDITOR
 // Small editor helper: menu item to reset apples while testing
-[UnityEditor.MenuItem("Debug/Currency/Reset Apples")]
+[UnityEditor.MenuItem("Debug/Currency/Reset Gold Coins")]
 private static void DebugResetApples()
 {
 Clear();
-Debug.Log("AppleCurrency: reset apples to 0");
+Debug.Log("AppleCurrency: reset Gold Coins to 0");
 }
 #endif
 }

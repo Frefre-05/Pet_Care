@@ -19,7 +19,7 @@ public class TrapDamage : MonoBehaviour
 
         if (health != null)
         {
-            health.TakeDamage(damageHearts); // this will remove 1 heart
+            health.TakeDamage(damageHearts, transform.position); // this will remove hearts and knock away from the trap
         }
     }
 }

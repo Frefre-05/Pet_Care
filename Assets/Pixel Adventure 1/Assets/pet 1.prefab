@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: -8119070096291426565}
   - component: {fileID: -5872608889576687753}
   - component: {fileID: -6675467584617601724}
+  - component: {fileID: 5456997206448177828}
   m_Layer: 3
   m_Name: pet 1
   m_TagString: Player
@@ -162,7 +163,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.0043807626, y: -0.024376146}
+  m_Offset: {x: 0.008585967, y: -0.044605456}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -172,7 +173,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.24264091, y: 0.25449198}
+  m_Size: {x: 0.14068991, y: 0.21377148}
   m_EdgeRadius: 0
 --- !u!95 &-3124591759951934149
 Animator:
@@ -210,6 +211,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JumpTwice
   moveSpeed: 5
   jumpForce: 10
+  jumpBoostMultiplier: 1.18
+  enableHungerSpeedPenalty: 1
+  lowHungerThreshold: 35
+  emptyHungerThreshold: 5
+  minSpeedMultiplierAtZeroHunger: 0.6
   extraJumps: 1
 --- !u!114 &4009478613480657374
 MonoBehaviour:
@@ -257,11 +263,15 @@ MonoBehaviour:
   Happiness: 100
   Health: 100
   tickSeconds: 6
-  hungerDecay: 2
+  hungerDecay: 1.5
   energyDecay: 1
   hygieneDecay: 1
   happinessDecay: 0.5
-  healthAutoRegen: -1
+  healthAutoRegen: -0.5
+  enableSlowerOverallDecay: 1
+  overallDecayMultiplier: 0.7
+  otherNeedsSlowMultiplier: 0.9
+  minGapAboveHappiness: 0.1
   lowNeed: 20
   hungerPerApple: 5
 --- !u!114 &124885048816064745
@@ -290,6 +300,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
+  speedBoostMultiplier: 1.25
+  enableHungerSpeedPenalty: 1
+  lowHungerThreshold: 35
+  emptyHungerThreshold: 5
+  minSpeedMultiplierAtZeroHunger: 0.6
 --- !u!114 &-5872608889576687753
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -320,3 +335,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   defaultScale: 7
+--- !u!114 &5456997206448177828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709664568850342564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d26b52a4da0204438093f53b7d45d4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUnstuckHitbox
+  inputThreshold: 0.2
+  minMovementPerFixedStep: 0.0004
+  stuckTime: 0.1
+  unstuckCooldown: 0.05
+  horizontalNudge: 0.02
+  verticalNudge: 0.005
+  pushSpeed: 1.2
+  maxPushesPerSecond: 10
+  requireBlockingSideContact: 1
+  sideNormalThreshold: 0.35
+  contactEscapeBias: 0.03
+  forceZeroFriction: 1
+  setContinuousCollision: 1
+  setInterpolation: 1

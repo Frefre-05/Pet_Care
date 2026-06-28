@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,9 +8,6 @@ public class AppleCounter : MonoBehaviour
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI countText; // drag AppleText
     [SerializeField] private Image icon; // drag AppleIcon (optional)
-
-    [Header("Prefs")]
-    [SerializeField] private string prefsKey = "APPLE_COUNT";
 
     [Header("Display")]
     [SerializeField] private bool useLeadingZeros = false;
@@ -22,7 +19,7 @@ public class AppleCounter : MonoBehaviour
 
     private void OnEnable()
     {
-        // Start a small polling loop�safe & simple across scenes
+        // Start a small polling loop—safe & simple across scenes
         loop = StartCoroutine(RefreshLoop());
         ForceRefresh();
     }
@@ -36,7 +33,7 @@ public class AppleCounter : MonoBehaviour
     {
         while (true)
         {
-            int v = PlayerPrefs.GetInt(prefsKey, 0);
+            int v = AppleCurrency.Get();
             if (v != cached)
             {
                 cached = v;
@@ -64,21 +61,15 @@ public class AppleCounter : MonoBehaviour
     // Safely add apples
     public static void AddApples(int amount)
     {
-        int cur = PlayerPrefs.GetInt("APPLE_COUNT", 0);
-        PlayerPrefs.SetInt("APPLE_COUNT", Mathf.Max(0, cur + amount));
-        PlayerPrefs.Save();
+        AppleCurrency.Add(amount);
     }
 
     // Try to spend apples for shop etc.
     public static bool TrySpendApples(int amount)
     {
-        int cur = PlayerPrefs.GetInt("APPLE_COUNT", 0);
-        if (cur < amount) return false;
-        PlayerPrefs.SetInt("APPLE_COUNT", cur - amount);
-        PlayerPrefs.Save();
-        return true;
+        return AppleCurrency.Spend(amount);
     }
 
     // Read apples anywhere
-    public static int GetApples() => PlayerPrefs.GetInt("APPLE_COUNT", 0);
+    public static int GetApples() => AppleCurrency.Get();
 }

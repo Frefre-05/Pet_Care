@@ -1140,7 +1140,6 @@ GameObject:
   - component: {fileID: 1255525090}
   - component: {fileID: 1255525089}
   - component: {fileID: 1255525088}
-  - component: {fileID: 1255525091}
   m_Layer: 5
   m_Name: Pet 2
   m_TagString: Untagged
@@ -1261,18 +1260,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1255525086}
   m_CullTransparentMesh: 1
---- !u!114 &1255525091
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1255525086}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 09afef7a275a42b4197407f3578b8c42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelect
 --- !u!1 &1351255419
 GameObject:
   m_ObjectHideFlags: 0
@@ -1285,7 +1272,6 @@ GameObject:
   - component: {fileID: 1351255423}
   - component: {fileID: 1351255422}
   - component: {fileID: 1351255421}
-  - component: {fileID: 1351255424}
   m_Layer: 5
   m_Name: Pet 1
   m_TagString: Untagged
@@ -1406,18 +1392,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1351255419}
   m_CullTransparentMesh: 1
---- !u!114 &1351255424
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1351255419}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 09afef7a275a42b4197407f3578b8c42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
 --- !u!1 &1500397733
 GameObject:
   m_ObjectHideFlags: 0
@@ -1944,6 +1918,9 @@ MonoBehaviour:
   footsteps: {fileID: 0}
   endpoint: {fileID: 0}
   foodcollect: {fileID: 0}
+  buttonClick: {fileID: 8300000, guid: 81652031b64c342cc8dbc59c138d77c5, type: 3}
+  purchaseSuccess: {fileID: 8300000, guid: 7bd6b897eb5ca4b7d88a205c4a51640c, type: 3}
+  purchaseFailed: {fileID: 8300000, guid: dc6614beca09347ec9b258f12d154bdd, type: 3}
 --- !u!1 &1834939244
 GameObject:
   m_ObjectHideFlags: 0
@@ -2092,7 +2069,6 @@ GameObject:
   - component: {fileID: 1971799617}
   - component: {fileID: 1971799616}
   - component: {fileID: 1971799615}
-  - component: {fileID: 1971799618}
   m_Layer: 5
   m_Name: Pet 3
   m_TagString: Untagged
@@ -2213,18 +2189,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1971799613}
   m_CullTransparentMesh: 1
---- !u!114 &1971799618
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1971799613}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 09afef7a275a42b4197407f3578b8c42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelect
 --- !u!1 &2065548967
 GameObject:
   m_ObjectHideFlags: 0
